@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Action Plan Dashboard — June 2026</title>
+<style>
+  :root{
+    --bg:#0f1422; --card:#1a2236; --card-hover:#202a44;
+    --text:#e8ecf5; --muted:#8b95ab; --border:#2a3450;
+    --red:#ef4444; --amber:#f59e0b; --green:#22c55e; --blue:#3b82f6; --purple:#a78bfa;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding:32px 20px}
+  .wrap{max-width:1200px;margin:0 auto}
+  header{text-align:center;margin-bottom:36px}
+  header h1{font-size:1.9rem;font-weight:700;letter-spacing:.5px}
+  header p{color:var(--muted);margin-top:6px;font-size:.95rem}
+  .legend{display:flex;gap:18px;justify-content:center;margin-top:14px;font-size:.8rem;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:22px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:transform .15s,box-shadow .15s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.35);background:var(--card-hover)}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .card h2{font-size:1.25rem}
+  .badge{font-size:.68rem;font-weight:700;letter-spacing:.8px;padding:4px 10px;border-radius:20px;text-transform:uppercase}
+  .badge.critical{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.4)}
+  .badge.high{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.4)}
+  .focus-line{color:var(--muted);font-size:.85rem;margin-bottom:18px}
+  .metric{margin-bottom:16px}
+  .metric-top{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:6px}
+  .metric-top .val{font-weight:700}
+  .bar{height:9px;background:#0b101e;border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;width:0;transition:width 1s ease}
+  .note{font-size:.78rem;color:var(--muted);margin-top:5px}
+  .tasks{margin-top:18px;border-top:1px solid var(--border);padding-top:14px}
+  .tasks h3{font-size:.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .task{display:flex;gap:10px;align-items:flex-start;font-size:.86rem;margin-bottom:8px;line-height:1.4}
+  .task .pri{flex-shrink:0;margin-top:4px;width:8px;height:8px;border-radius:50%}
+  footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:36px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📊 Location Action Plan</h1>
+    <p>Focus areas for the coming days · Data as of June 10, 2026</p>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--green)"></span>On track (≥80%)</span>
+      <span><span class="dot" style="background:var(--amber)"></span>Needs push (40–79%)</span>
+      <span><span class="dot" style="background:var(--red)"></span>Critical (&lt;40%)</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ROSEDALE -->
+    <div class="card">
+      <div class="card-head">
+        <h2>📍 Rosedale</h2>
+        <span class="badge high">High Priority</span>
+      </div>
+      <p class="focus-line">Major focus: <strong>MIM + New Activations</strong></p>
+
+      <div class="metric">
+        <div class="metric-top"><span>New Activations</span><span class="val" style="color:var(--green)">89.3%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--green)" data-w="89.3%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top"><span>MIM</span><span class="val" style="color:var(--red)">26.8%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--red)" data-w="26.8%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top"><span>Tablets</span><span class="val" style="color:var(--amber)">64.9%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--amber)" data-w="64.9%"></div></div>
+      </div>
+
+      <div class="tasks">
+        <h3>Action Items</h3>
+        <div class="task"><span class="pri" style="background:var(--red)"></span>Drive MIM &amp; new activations — top priority</div>
+        <div class="task"><span class="pri" style="background:var(--amber)"></span>Push tablets to close 64.9% trend gap</div>
+        <div class="task"><span class="pri" style="background:var(--blue)"></span>Feature Revenue $ at or above goal (10% of MLB)</div>
+        <div class="task"><span class="pri" style="background:var(--purple)"></span>CSAT — perfect 10 needed (5% of MLB)</div>
+      </div>
+    </div>
+
+    <!-- WESTERN CENTER -->
+    <div class="card">
+      <div class="card-head">
+        <h2>📍 Western Center</h2>
+        <span class="badge critical">Critical</span>
+      </div>
+      <p class="focus-line">Major focus: <strong>MIM + New Acts</strong></p>
+
+      <div class="metric">
+        <div class="metric-top"><span>New Activations</span><span class="val" style="color:var(--amber)">64.9%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--amber)" data-w="64.9%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top"><span>MIM</span><span class="val" style="color:var(--red)">0%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--red)" data-w="2%"></div></div>
+        <div class="note">1 BAN / 2 lines as of June 10</div>
+      </div>
+
+      <div class="tasks">
+        <h3>Action Items</h3>
+        <div class="task"><span class="pri" style="background:var(--red)"></span>MIM at 0% — immediate, aggressive push required</div>
+        <div class="task"><span class="pri" style="background:var(--red)"></span>Lift new activations from 64.9% trend</div>
+        <div class="task"><span class="pri" style="background:var(--blue)"></span>Maintain Feature Retention</div>
+      </div>
+    </div>
+
+    <!-- SAMUELL -->
+    <div class="card">
+      <div class="card-head">
+        <h2>📍 Samuell</h2>
+        <span class="badge high">High Priority</span>
+      </div>
+      <p class="focus-line">Major focus: <strong>MIM + New Acts</strong></p>
+
+      <div class="metric">
+        <div class="metric-top"><span>New Activations</span><span class="val" style="color:var(--green)">95.2%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--green)" data-w="95.2%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top"><span>MIM</span><span class="val" style="color:var(--amber)">54.8%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--amber)" data-w="54.8%"></div></div>
+        <div class="note">Quota: 31 lines for June · 7 BANs / 16 lines as of June 10</div>
+      </div>
+      <div class="metric">
+        <div class="metric-top"><span>HSI</span><span class="val" style="color:var(--red)">28.9%</span></div>
+        <div class="bar"><div class="fill" style="background:var(--red)" data-w="28.9%"></div></div>
+        <div class="note">10% of MLB — biggest drag on bonus</div>
+      </div>
+
+      <div class="tasks">
+        <h3>Action Items</h3>
+        <div class="task"><span class="pri" style="background:var(--red)"></span>HSI hurting most — prioritize attachment on every sale</div>
+        <div class="task"><span class="pri" style="background:var(--red)"></span>Flagged activations — implement better practices immediately</div>
+        <div class="task"><span class="pri" style="background:var(--amber)"></span>Close MIM gap: 15 lines remaining on 31-line quota</div>
+        <div class="task"><span class="pri" style="background:var(--purple)"></span>CSAT — perfect 10 secures full 5% of MLB</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Action plan per district directive · June 11, 2026</footer>
+</div>
+<script>
+  window.addEventListener('load',()=>{
+    document.querySelectorAll('.fill').forEach(f=>{f.style.width=f.dataset.w});
+  });
+</script>
+</body>
+</html>

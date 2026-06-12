@@ -289,17 +289,19 @@ function drawTrend(vis,pf){
     if(!inSet)return;
     dayMap[r.date]=(dayMap[r.date]||0)+r.vals[m];
   });
-  const dates=Object.keys(dayMap).sort((a,b)=>parseMDY(a)-parseMDY(b));
+  const idxOf=dt=>Math.round((parseMDY(dt)-start)/864e5);
+  // keep only days inside the current month (sheet may include prior-month rows)
+  const dates=Object.keys(dayMap).filter(d=>{const i=idxOf(d);return i>=0&&i<nDays}).sort((a,b)=>parseMDY(a)-parseMDY(b));
   const dailyData=labels.map(()=>null);
-  dates.forEach(dt=>{const i=parseMDY(dt).getDate()-1;if(i>=0&&i<nDays)dailyData[i]=dayMap[dt]});
+  dates.forEach(dt=>{dailyData[idxOf(dt)]=dayMap[dt]});
   // cumulative actual: anchor so the last daily date equals current MTD
   const cum=labels.map(()=>null);
   if(dates.length){
     const winSum=dates.reduce((t,d)=>t+dayMap[d],0);
     let run=mtd-winSum;
-    const firstIdx=parseMDY(dates[0]).getDate()-1;
+    const firstIdx=idxOf(dates[0]);
     if(firstIdx-1>=0)cum[firstIdx-1]=run;
-    dates.forEach(dt=>{const i=parseMDY(dt).getDate()-1;run+=dayMap[dt];if(i>=0&&i<nDays)cum[i]=run});
+    dates.forEach(dt=>{run+=dayMap[dt];cum[idxOf(dt)]=run});
   }
   const todayIdx=parseMDY(meta.reportDate).getDate()-1;
   const paceTarget=goalLine[todayIdx];

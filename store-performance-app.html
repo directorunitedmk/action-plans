@@ -772,9 +772,9 @@ function screenDM(){
   else if(dmFilters.sort==='market')list=list.slice().sort((a,b)=>a.market.localeCompare(b.market)||a.pace[0]-b.pace[0]);
   else if(dmFilters.sort==='store')list=list.slice().sort((a,b)=>a.store.localeCompare(b.store));
 
-  // sub-dealer rollup
+  // sub-dealer rollup — scoped to filtered list
   const dealerMap={};
-  all.forEach(s=>{if(!dealerMap[s.dealer])dealerMap[s.dealer]={stores:[],name:s.dealer};dealerMap[s.dealer].stores.push(s)});
+  list.forEach(s=>{if(!dealerMap[s.dealer])dealerMap[s.dealer]={stores:[],name:s.dealer};dealerMap[s.dealer].stores.push(s)});
   const dealerRollup=Object.values(dealerMap).map(d=>{
     const p=pacePct(d.stores,0),crit=d.stores.filter(s=>s.pace[0]<70).length;
     const ea=elbAgg(d.stores);

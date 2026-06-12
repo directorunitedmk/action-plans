@@ -765,47 +765,64 @@ function screenLinks(){
 function todayTable(list,prevScreen){
   const sorted=list.slice().sort((a,b)=>b.today.reduce((s,v)=>s+v,0)-a.today.reduce((s,v)=>s+v,0));
   const colHeaders=['New All','Voice','HINT','BTS'];
-  let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:380px">
-    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
-      <th style="text-align:left;padding:5px 6px">Store</th>`;
-  colHeaders.forEach(n=>h+=`<th style="text-align:center;padding:5px 5px">${n}</th>`);
-  h+=`<th style="text-align:center;padding:5px 6px">Total</th></tr></thead><tbody>`;
-  sorted.forEach(s=>{
-    const total=s.today.reduce((sum,v)=>sum+v,0);
-    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
-      <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
-    s.today.slice(0,4).forEach(v=>{
-      const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
-      h+=`<td style="text-align:center;padding:5px 5px;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
-    });
-    const rowTotal=s.today.slice(0,4).reduce((sum,v)=>sum+v,0);
-    const tc=rowTotal>0?'var(--green)':'var(--red)';
-    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td></tr>`;
-  });
-  // totals row
-  const tots=[0,1,2,3].map(i=>list.reduce((s,st)=>s+st.today[i],0));
-  const grand=tots.reduce((s,v)=>s+v,0);
-  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
-  tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
-  h+=`<td style="text-align:center;padding:5px 6px;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td></tr>`;
-  h+='</tbody></table></div>';
-  // conversion footer
+  // pre-compute aggregate conversion for totals row
   const totalQpayT=list.reduce((s,st)=>s+num(st.qpayT),0);
   const totalSalesT=list.reduce((s,st)=>s+Math.round(pf(st.convT)*num(st.qpayT)/100),0);
   const totalQpayM=list.reduce((s,st)=>s+num(st.qpayM),0);
   const totalSalesM=list.reduce((s,st)=>s+Math.round(pf(st.convM)*num(st.qpayM)/100),0);
   const aggConvT=totalQpayT>0?totalSalesT/totalQpayT*100:0;
   const aggConvM=totalQpayM>0?totalSalesM/totalQpayM*100:0;
-  const cdiff=aggConvT-aggConvM;
-  const ccolor=cdiff>=0?'var(--green)':'var(--red)';
-  const clabel=cdiff>=0?`▲ ${cdiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(cdiff).toFixed(1)}% below MTD`;
+  const aggDiff=aggConvT-aggConvM;
+  let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:440px">
+    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:5px 6px">Store</th>`;
+  colHeaders.forEach(n=>h+=`<th style="text-align:center;padding:5px 5px">${n}</th>`);
+  h+=`<th style="text-align:center;padding:5px 6px">Total</th>
+      <th style="text-align:center;padding:5px 8px;border-left:1px solid var(--border)">Conv today <span style="font-weight:400;font-size:.58rem">vs MTD</span></th>
+    </tr></thead><tbody>`;
+  sorted.forEach(s=>{
+    const total=s.today.reduce((sum,v)=>sum+v,0);
+    const ct=pf(s.convT),cm=pf(s.convM),qpt=num(s.qpayT);
+    const cdiff=ct-cm;
+    const ccolor=cdiff>=0?'var(--green)':'var(--red)';
+    const convCell=qpt>0
+      ?`<div style="font-weight:700;color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${ct.toFixed(0)}%</div>
+        <div style="font-size:.6rem;color:${ccolor};font-weight:700;margin-top:1px">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</div>
+        <div style="font-size:.58rem;color:var(--muted)">${qpt} QPAY</div>`
+      :`<div style="color:var(--muted);font-size:.74rem">—</div>`;
+    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
+      <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
+    s.today.slice(0,4).forEach(v=>{
+      const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
+      h+=`<td style="text-align:center;padding:5px 5px;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
+    });
+    const rowTotal=s.today.slice(0,4).reduce((sum,v)=>sum+v,0);
+    const tc=rowTotal>0?'var(--green)':'var(--red)';
+    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td>
+        <td style="text-align:center;padding:5px 8px;border-left:1px solid var(--border);line-height:1.2">${convCell}</td></tr>`;
+  });
+  // totals row
+  const tots=[0,1,2,3].map(i=>list.reduce((s,st)=>s+st.today[i],0));
+  const grand=tots.reduce((s,v)=>s+v,0);
+  const aggDiffColor=aggDiff>=0?'var(--green)':'var(--red)';
+  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
+  tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
+  h+=`<td style="text-align:center;padding:5px 6px;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td>
+      <td style="text-align:center;padding:5px 8px;border-left:1px solid var(--border);line-height:1.2">
+        <div style="font-weight:700;color:${aggConvT>=100?'var(--green)':aggConvT>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${aggConvT.toFixed(0)}%</div>
+        <div style="font-size:.6rem;color:${aggDiffColor};font-weight:700;margin-top:1px">${aggDiff>=0?'▲':'▼'}${Math.abs(aggDiff).toFixed(1)}%</div>
+        <div style="font-size:.58rem;color:var(--muted)">${totalQpayT} QPAY</div>
+      </td></tr>`;
+  h+='</tbody></table></div>';
+  // conversion footer (MTD context)
+  const clabel=aggDiff>=0?`▲ ${aggDiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(aggDiff).toFixed(1)}% below MTD`;
   h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">
     <span style="color:var(--muted)">Conversion today</span>
     <span style="display:flex;align-items:center;gap:8px">
       <b>${aggConvT.toFixed(2)}%</b><span style="color:var(--muted)">(${totalQpayT} QPAY)</span>
-      <span style="font-size:.68rem;font-weight:700;color:${ccolor}">${clabel}</span>
+      <span style="font-size:.68rem;font-weight:700;color:${aggDiffColor}">${clabel}</span>
     </span>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px;font-size:.72rem">

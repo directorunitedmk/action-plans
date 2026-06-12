@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>United MK · Store Performance</title>
+<style>
+  :root{--bg:#f1f4f9;--card:#ffffff;--text:#16203a;--muted:#64748b;--border:#e2e8f0;--track:#eef1f6;
+    --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb;--magenta:#e20074;
+    --grad:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#e20074 130%)}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+  .phone{width:100%;max-width:520px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+  /* header */
+  .appbar{background:var(--grad);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(16,24,40,.18)}
+  .appbar .back{background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;flex-shrink:0}
+  .appbar .titles{flex:1;min-width:0}
+  .appbar h1{font-size:1.05rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appbar .sub{font-size:.72rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appbar .home{background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;flex-shrink:0}
+  .screen{flex:1;padding:18px 16px 30px;animation:slidein .22s ease}
+  @keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+  .livebar{display:flex;align-items:center;gap:7px;justify-content:center;font-size:.72rem;color:var(--muted);padding:8px 0 0}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  /* welcome */
+  .hero{text-align:center;padding:40px 10px 26px}
+  .hero .logo{font-size:3rem}
+  .hero h2{font-size:1.5rem;margin-top:10px}
+  .hero p{color:var(--muted);font-size:.9rem;margin-top:6px}
+  .role-btn{display:flex;align-items:center;gap:16px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px 18px;margin-top:14px;cursor:pointer;text-align:left;box-shadow:0 1px 4px rgba(16,24,40,.07);transition:transform .12s}
+  .role-btn:active{transform:scale(.98)}
+  .role-btn .ic{font-size:1.9rem;width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .role-btn .ic.emp{background:rgba(37,99,235,.12)}
+  .role-btn .ic.mgr{background:rgba(226,0,116,.1)}
+  .role-btn h3{font-size:1.05rem}
+  .role-btn p{font-size:.78rem;color:var(--muted);margin-top:2px}
+  .role-btn .chev{margin-left:auto;color:var(--muted)}
+  /* lists */
+  .list-title{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 2px 10px}
+  .item{display:flex;align-items:center;gap:13px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:15px;padding:14px 15px;margin-bottom:10px;cursor:pointer;text-align:left;box-shadow:0 1px 3px rgba(16,24,40,.06);transition:transform .12s}
+  .item:active{transform:scale(.985)}
+  .item .av{width:42px;height:42px;border-radius:12px;background:rgba(37,99,235,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex-shrink:0}
+  .item .av.all{background:rgba(226,0,116,.1);color:var(--magenta)}
+  .item .info{flex:1;min-width:0}
+  .item h3{font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item p{font-size:.74rem;color:var(--muted);margin-top:1px}
+  .item .right{text-align:right;flex-shrink:0}
+  .item .pct{font-weight:700;font-size:.95rem}
+  .item .rsub{font-size:.7rem;color:var(--muted)}
+  .statdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+  /* dashboard */
+  .sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+  .sum{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:10px 11px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .sum .lab{font-size:.62rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+  .sum .val{font-size:1.15rem;font-weight:700;margin:2px 0 1px}
+  .sum .sub{font-size:.66rem;color:var(--muted)}
+  .seg{display:flex;background:#e8edf5;border-radius:12px;padding:3px;margin-bottom:14px}
+  .seg button{flex:1;border:none;background:transparent;padding:8px;border-radius:10px;font-size:.8rem;color:var(--muted);cursor:pointer;font-weight:600}
+  .seg button.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  /* store detail */
+  .det-head{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .det-head .row1{display:flex;justify-content:space-between;align-items:center}
+  .det-head h2{font-size:1.2rem}
+  .badge{font-size:.62rem;font-weight:700;letter-spacing:.7px;padding:4px 10px;border-radius:20px;text-transform:uppercase}
+  .badge.critical{background:rgba(220,38,38,.1);color:var(--red)}
+  .badge.high{background:rgba(217,119,6,.1);color:var(--amber)}
+  .badge.on-pace{background:rgba(22,163,74,.1);color:var(--green)}
+  .det-head .who{font-size:.76rem;color:var(--muted);margin-top:4px}
+  .bigpct{display:flex;align-items:baseline;gap:8px;margin-top:12px}
+  .bigpct .n{font-size:2.2rem;font-weight:800;line-height:1}
+  .bigpct .d{font-size:.78rem;color:var(--muted)}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px 16px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .panel h3{font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .met{margin-bottom:13px}
+  .met:last-child{margin-bottom:0}
+  .met .top{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:5px}
+  .met .nm{font-weight:600}
+  .met .nums{color:var(--muted)}
+  .met .nums b{color:var(--text)}
+  .met .pc{font-weight:700;margin-left:8px}
+  .bar{height:8px;background:var(--track);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;transition:width .7s ease}
+  .met .foot{display:flex;gap:14px;font-size:.7rem;color:var(--muted);margin-top:4px}
+  .statline{display:flex;justify-content:space-between;font-size:.82rem;padding:7px 0;border-bottom:1px solid var(--track)}
+  .statline:last-child{border-bottom:none}
+  .statline span{color:var(--muted)}
+  .statline b{font-weight:700}
+  .spark-holder{width:100%}
+  .err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px;font-size:.82rem;text-align:center;margin-bottom:12px}
+  #loading{text-align:center;color:var(--muted);padding:80px 20px;font-size:.95rem}
+  footer{text-align:center;font-size:.68rem;color:var(--muted);padding:0 0 22px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar" id="appbar" style="display:none">
+    <button class="back" id="btnBack">←</button>
+    <div class="titles"><h1 id="barTitle"></h1><div class="sub" id="barSub"></div></div>
+    <button class="home" id="btnHome" title="Start over">⌂</button>
+  </div>
+  <div id="root"><div id="loading">Loading live data from Google Sheet…</div></div>
+  <footer id="foot"></footer>
+</div>
+<script>
+const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM', GID='593325688';
+const MAIN_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+const DAILY_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Daily Perf Data')}`;
+const REFRESH_MS=10*60*1000;
+const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
+const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid'};
+const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
+let model=null,daily=[];
+// navigation state
+let nav={screen:'role',role:null,dealer:null,store:null,mgrMetric:0};
+
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cur);cur=''}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+      else if(ch!=='\r')cur+=ch;
+    }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+const num=s=>parseInt(String(s).replace(/[,$\s]/g,''),10)||0;
+function buildModel(rows){
+  const meta={asOf:(rows[0]&&rows[0][19])||'',reportDate:rows[1][0],eom:rows[1][1],daysLeft:rows[1][2],
+    paceFrac:(parseFloat(String(rows[1][3]).replace('%',''))||40)/100};
+  const stores=[];
+  for(let i=3;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[0]||!r[3])break;
+    const goal=r.slice(6,11).map(num),mtd=r.slice(11,16).map(num),today=r.slice(16,21).map(num);
+    const vari=r.slice(26,31).map(num),rem=r.slice(36,41).map(num);
+    const pace=goal.map((g,j)=>{const t=Math.round(g*meta.paceFrac);return t>0?mtd[j]/t*100:0});
+    const km=String(r[4]).match(/\(S\)\s*(.+)$/);
+    stores.push({market:r[0].trim(),rdm:r[1].trim(),dealer:DEALER_OVERRIDES[r[3].trim()]||r[2].trim(),
+      store:r[3].trim(),idKey:km?km[1].trim():r[3].trim(),goal,mtd,today,vari,rem,pace,
+      qpayT:r[41],convT:r[42],qpayM:r[43],convM:r[44],featT:r[45],featM:r[46],topFeat:(r[51]||'').trim()});
+  }
+  return {meta,stores};
+}
+function buildDaily(rows){
+  const recs=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[0])continue;
+    if(!r[1]&&!r[2])continue;
+    const km=String(r[2]).match(/\(S\)\s*(.+)$/);
+    recs.push({date:r[0].trim(),key:km?km[1].trim():null,
+      vals:{0:num(r[5]),1:num(r[6]),2:num(r[29]),3:num(r[26])}});
+  }
+  return recs;
+}
+function parseMDY(s){const p=s.split('/');return new Date(+p[2],+p[0]-1,+p[1])}
+const colorFor=p=>p>=100?'var(--green)':p>=70?'var(--amber)':'var(--red)';
+const hexFor=p=>p>=100?'#16a34a':p>=70?'#d97706':'#dc2626';
+const badgeFor=p=>p>=100?['on-pace','On Pace']:p>=70?['high','Needs Push']:['critical','Critical'];
+const sign=n=>n>0?'+'+n:''+n;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const title=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+const initials=s=>s.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+function seriesFor(subset,m){
+  const meta=model.meta;
+  const start=parseMDY(meta.reportDate);start.setDate(1);
+  const nDays=parseMDY(meta.eom).getDate();
+  const goalTotal=subset.reduce((t,s)=>t+s.goal[m],0);
+  const mtd=subset.reduce((t,s)=>t+s.mtd[m],0);
+  const goalLine=[];for(let i=0;i<nDays;i++)goalLine.push(goalTotal*(i+1)/nDays);
+  const keys=new Set(subset.map(s=>s.idKey));
+  const dayMap={};
+  daily.forEach(r=>{if(r.key&&keys.has(r.key))dayMap[r.date]=(dayMap[r.date]||0)+r.vals[m]});
+  const idxOf=dt=>Math.round((parseMDY(dt)-start)/864e5);
+  const dates=Object.keys(dayMap).filter(d=>{const i=idxOf(d);return i>=0&&i<nDays}).sort((a,b)=>parseMDY(a)-parseMDY(b));
+  const cum=new Array(nDays).fill(null);
+  if(dates.length){
+    let run=mtd-dates.reduce((t,d)=>t+dayMap[d],0);
+    const f=idxOf(dates[0]);if(f-1>=0)cum[f-1]=run;
+    dates.forEach(dt=>{run+=dayMap[dt];cum[idxOf(dt)]=run});
+  }
+  const todayIdx=parseMDY(meta.reportDate).getDate()-1;
+  return {nDays,goalTotal,mtd,goalLine,cum,todayIdx,paceTarget:goalLine[todayIdx]};
+}
+function sparkSVG(se,h=120){
+  const W=480,H=h,L=8,R=8,T=12,B=8,pw=W-L-R,ph=H-T-B;
+  const yMax=Math.max(se.goalTotal,...se.cum.filter(v=>v!=null),1)*1.08;
+  const X=i=>L+pw*(i+.5)/se.nDays, Y=v=>T+ph*(1-v/yMax);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px" xmlns="http://www.w3.org/2000/svg">`;
+  s+=`<line x1="${X(se.todayIdx)}" y1="${T}" x2="${X(se.todayIdx)}" y2="${T+ph}" stroke="#d97706" stroke-width="1" stroke-dasharray="3 3"/>`;
+  s+=`<polyline fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="5 4" points="${se.goalLine.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
+  const pts=[];se.cum.forEach((v,i)=>{if(v!=null)pts.push([X(i),Y(v),v,i+1])});
+  if(pts.length){
+    const col=se.mtd>=se.paceTarget?'#16a34a':'#dc2626';
+    s+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+    pts.forEach(p=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="${col}"><title>Day ${p[3]}: ${p[2]} cumulative</title></circle>`});
+  }
+  return s+'</svg>';
+}
+
+/* ===== screens ===== */
+function go(patch){Object.assign(nav,patch);renderApp()}
+function backTarget(){
+  if(nav.screen==='detail')return nav.role==='manager'?{screen:'dash'}:{screen:'stores'};
+  if(nav.screen==='dash'||nav.screen==='stores')return {screen:'dealer'};
+  if(nav.screen==='dealer')return {screen:'role',role:null,dealer:null};
+  return null;
+}
+function dealersList(){
+  const map={};
+  model.stores.forEach(s=>{(map[s.dealer]=map[s.dealer]||[]).push(s)});
+  return Object.keys(map).sort().map(d=>({name:d,stores:map[d]}));
+}
+function storesOf(){
+  if(nav.dealer==='__all__')return model.stores.slice();
+  return model.stores.filter(s=>s.dealer===nav.dealer);
+}
+function pacePct(list,m){
+  const mtd=list.reduce((t,s)=>t+s.mtd[m],0),g=list.reduce((t,s)=>t+s.goal[m],0);
+  return g?mtd/(g*model.meta.paceFrac)*100:0;
+}
+
+function screenRole(){
+  return `<div class="screen">
+    <div class="hero"><div class="logo">📶</div><h2>United MK Performance</h2><p>Live store metrics, straight from the field.<br>Who's checking in?</p></div>
+    <button class="role-btn" onclick="go({screen:'dealer',role:'employee'})">
+      <span class="ic emp">👤</span><span><h3>I'm an Employee</h3><p>Check how my store is doing this month</p></span><span class="chev">›</span></button>
+    <button class="role-btn" onclick="go({screen:'dealer',role:'manager'})">
+      <span class="ic mgr">📊</span><span><h3>I'm a Manager</h3><p>See the dashboard for all my stores</p></span><span class="chev">›</span></button>
+    ${liveBar()}
+  </div>`;
+}
+function screenDealer(){
+  let h=`<div class="screen"><div class="list-title">Select your sub-dealer</div>`;
+  if(nav.role==='manager'){
+    const p=pacePct(model.stores,0);
+    h+=`<button class="item" onclick="go({screen:'dash',dealer:'__all__'})">
+      <span class="av all">★</span><span class="info"><h3>All Sub-Dealers</h3><p>${model.stores.length} stores · company-wide</p></span>
+      <span class="right"><span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">on target</div></span></button>`;
+  }
+  dealersList().forEach(d=>{
+    const p=pacePct(d.stores,0);
+    h+=`<button class="item" onclick="go({screen:nav.role==='manager'?'dash':'stores',dealer:'${esc(d.name)}'})">
+      <span class="av">${initials(d.name)}</span>
+      <span class="info"><h3>${esc(d.name)}</h3><p>${d.stores.length} store${d.stores.length>1?'s':''}</p></span>
+      <span class="right"><span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">on target</div></span></button>`;
+  });
+  return h+liveBar()+'</div>';
+}
+function summaryCards(list){
+  let h='<div class="sumgrid">';
+  NAMES.forEach((n,i)=>{
+    const mtd=list.reduce((t,s)=>t+s.mtd[i],0),g=list.reduce((t,s)=>t+s.goal[i],0);
+    const p=g?mtd/(g*model.meta.paceFrac)*100:0;
+    h+=`<div class="sum"><div class="lab">${n}</div><div class="val" style="color:${colorFor(p)}">${p.toFixed(0)}%</div><div class="sub">${mtd}/${g} goal</div></div>`;
+  });
+  const tdy=list.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
+  h+=`<div class="sum" style="border-left:3px solid var(--blue)"><div class="lab">Today</div><div class="val" style="color:var(--blue)">+${tdy}</div><div class="sub">all metrics</div></div>`;
+  return h+'</div>';
+}
+function storeRow(s){
+  const p=s.pace[0];
+  return `<button class="item" onclick="go({screen:'detail',store:'${esc(s.store)}'})">
+    <span class="av" style="background:${p>=100?'rgba(22,163,74,.1)':p>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};color:${hexFor(p)}">${initials(s.store)}</span>
+    <span class="info"><h3>${esc(title(s.store))}</h3><p>${esc(MKT_ABBR[s.market]||s.market)} · RDM ${esc(s.rdm)}</p></span>
+    <span class="right"><span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">${s.mtd[0]}/${s.goal[0]} New All</div></span></button>`;
+}
+function screenDash(){
+  const list=storesOf();
+  const sorted=list.slice().sort((a,b)=>a.pace[0]-b.pace[0]);
+  const se=seriesFor(list,0);
+  let h=`<div class="screen">${summaryCards(list)}
+    <div class="panel"><h3>New All — month trend vs goal pace</h3><div class="spark-holder">${sparkSVG(se,130)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
+      <span>MTD <b style="color:var(--text)">${se.mtd.toLocaleString()}</b></span>
+      <span>pace target <b style="color:var(--text)">${Math.round(se.paceTarget).toLocaleString()}</b></span>
+      <span style="color:${se.mtd>=se.paceTarget?'var(--green)':'var(--red)'}">${sign(Math.round(se.mtd-se.paceTarget))} vs pace</span></div></div>
+    <div class="list-title">Stores · worst first</div>`;
+  sorted.forEach(s=>h+=storeRow(s));
+  return h+liveBar()+'</div>';
+}
+function screenStores(){
+  const sorted=storesOf().slice().sort((a,b)=>a.store.localeCompare(b.store));
+  let h=`<div class="screen"><div class="list-title">Choose your store</div>`;
+  sorted.forEach(s=>h+=storeRow(s));
+  return h+liveBar()+'</div>';
+}
+function screenDetail(){
+  const s=model.stores.find(x=>x.store===nav.store);
+  if(!s)return '<div class="screen"><div class="err">Store not found — data may have changed. Go back and re-select.</div></div>';
+  const [cls,lbl]=badgeFor(s.pace[0]);
+  const se=seriesFor([s],0);
+  let mets='';
+  NAMES.forEach((n,i)=>{
+    const p=s.pace[i],col=colorFor(p);
+    mets+=`<div class="met">
+      <div class="top"><span class="nm">${n}</span><span class="nums"><b>${s.mtd[i]}</b>/${s.goal[i]}${s.today[i]?` · <b style="color:var(--blue)">${sign(s.today[i])} today</b>`:''}<span class="pc" style="color:${col}">${p.toFixed(0)}%</span></span></div>
+      <div class="bar"><div class="fill" style="background:${col};width:${Math.min(p,100).toFixed(1)}%"></div></div>
+      <div class="foot"><span>Δ pace ${sign(s.vari[i])}</span><span>${s.rem[i]} to go</span></div>
+    </div>`;
+  });
+  let feat=`${s.featM}/box MTD`;
+  if(s.featT&&!/^\$\s*0(\.00)?\s*$|^\$\s*-/.test(s.featT.trim()))feat+=` · ${s.featT} today`;
+  return `<div class="screen">
+    <div class="det-head">
+      <div class="row1"><h2>📍 ${esc(title(s.store))}</h2><span class="badge ${cls}">${lbl}</span></div>
+      <div class="who">${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · RDM ${esc(s.rdm)}</div>
+      <div class="bigpct"><span class="n" style="color:${colorFor(s.pace[0])}">${s.pace[0].toFixed(0)}%</span>
+      <span class="d">of New All pace target · ${s.mtd[0]}/${s.goal[0]} goal · ${s.rem[0]} to go in ${model.meta.daysLeft} days</span></div>
+    </div>
+    <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,120)}</div>
+    <div class="panel"><h3>Metrics month-to-date</h3>${mets}</div>
+    <div class="panel"><h3>Conversion & features</h3>
+      <div class="statline"><span>Conversion MTD</span><b>${esc(s.convM)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayM)} QPAY)</span></b></div>
+      <div class="statline"><span>Conversion today</span><b>${esc(s.convT)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayT)} QPAY)</span></b></div>
+      <div class="statline"><span>Feature revenue</span><b>${esc(feat)}</b></div>
+      ${s.topFeat?`<div class="statline"><span>Top feature</span><b>${esc(s.topFeat)}</b></div>`:''}
+    </div>
+    ${liveBar()}
+  </div>`;
+}
+function liveBar(){
+  return `<div class="livebar"><span class="pulse"></span><span>Live · sheet as of ${esc(model?model.meta.asOf:'')} · refreshes every 10 min</span></div>`;
+}
+
+function renderApp(){
+  if(!model)return;
+  const root=document.getElementById('root');
+  const bar=document.getElementById('appbar');
+  const tEl=document.getElementById('barTitle'),sEl=document.getElementById('barSub');
+  if(nav.screen==='role'){bar.style.display='none';root.innerHTML=screenRole()}
+  else{
+    bar.style.display='flex';
+    const dn=nav.dealer==='__all__'?'All Sub-Dealers':nav.dealer;
+    if(nav.screen==='dealer'){tEl.textContent=nav.role==='manager'?'Manager':'Employee';sEl.textContent='Select sub-dealer';root.innerHTML=screenDealer()}
+    if(nav.screen==='dash'){tEl.textContent=dn;sEl.textContent='Manager dashboard · '+storesOf().length+' stores';root.innerHTML=screenDash()}
+    if(nav.screen==='stores'){tEl.textContent=dn;sEl.textContent='Choose your store';root.innerHTML=screenStores()}
+    if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=dn+' · store detail';root.innerHTML=screenDetail()}
+  }
+  document.getElementById('foot').textContent='United MK · data: Month-To-Date Perf (Google Sheet) · '+(model.meta.paceFrac*100).toFixed(0)+'% through month';
+}
+document.getElementById('btnBack').addEventListener('click',()=>{const t=backTarget();if(t)go(t)});
+document.getElementById('btnHome').addEventListener('click',()=>go({screen:'role',role:null,dealer:null,store:null}));
+
+async function loadData(){
+  try{
+    const [r1,r2]=await Promise.all([
+      fetch(MAIN_URL+'&t='+Date.now(),{cache:'no-store'}),
+      fetch(DAILY_URL+'&t='+Date.now(),{cache:'no-store'})
+    ]);
+    if(r1.ok){
+      const m=buildModel(parseCSV(await r1.text()));
+      if(m.stores.length)model=m;
+    }
+    if(r2.ok)daily=buildDaily(parseCSV(await r2.text()));
+    if(model)renderApp();
+    else document.getElementById('root').innerHTML='<div class="screen"><div class="err">Could not load data from the Google Sheet. Check your connection and reload.</div></div>';
+  }catch(e){
+    if(!model)document.getElementById('root').innerHTML='<div class="screen"><div class="err">Could not load data from the Google Sheet. Check your connection and reload.</div></div>';
+  }
+}
+loadData();
+setInterval(loadData,REFRESH_MS);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadData()});
+</script>
+</body>
+</html>

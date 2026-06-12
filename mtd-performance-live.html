@@ -90,6 +90,13 @@
   .statrow em{color:var(--muted);font-style:normal;font-size:.73rem}
   footer{text-align:center;color:var(--muted);font-size:.76rem;margin-top:28px}
   #loading{text-align:center;color:var(--muted);padding:60px 0;font-size:.95rem}
+  /* ===== trend view ===== */
+  .trend-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .trend-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .trend-note{font-size:.75rem;color:var(--muted)}
+  .chart-holder{position:relative;height:420px}
+  .trend-stats{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;font-size:.8rem;color:var(--muted)}
+  .trend-stats strong{color:var(--text)}
   @media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -104,6 +111,7 @@
       <button class="refresh-btn" onclick="loadData(true)">↻ Refresh now</button>
       <button class="view-btn" id="btnTable" onclick="setView('table')">☰ Table</button>
       <button class="view-btn" id="btnCards" onclick="setView('cards')">▦ Cards</button>
+      <button class="view-btn" id="btnTrend" onclick="setView('trend')">📈 Trend</button>
     </div>
     <div class="legend">
       <span><span class="dot" style="background:var(--green)"></span>On pace (≥100%)</span>
@@ -126,20 +134,23 @@
   <div id="loading">Loading live data from Google Sheet…</div>
   <footer id="foot"></footer>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
 const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM', GID='593325688';
 const URLS=[
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`,
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`
 ];
+const DAILY_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Daily Perf Data')}`;
 const REFRESH_MS=10*60*1000;
 const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
 const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid'};
 const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
-let model=null;
+let model=null,daily=null,chart=null;
 const state={market:localStorage.getItem('f_market')||'__all__',dealer:localStorage.getItem('f_dealer')||'__all__'};
 let view=localStorage.getItem('view')||'table';
 let sortIdx=parseInt(localStorage.getItem('sortIdx')||'0',10);
+let trendIdx=parseInt(localStorage.getItem('trendIdx')||'0',10);
 
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -171,8 +182,9 @@ function buildModel(rows){
     const goal=r.slice(6,11).map(num),mtd=r.slice(11,16).map(num),today=r.slice(16,21).map(num);
     const vari=r.slice(26,31).map(num),rem=r.slice(36,41).map(num);
     const pace=goal.map((g,j)=>{const t=Math.round(g*meta.paceFrac);return t>0?mtd[j]/t*100:0});
+    const km=String(r[4]).match(/\(S\)\s*(.+)$/);
     stores.push({market:r[0].trim(),rdm:r[1].trim(),dealer:DEALER_OVERRIDES[r[3].trim()]||r[2].trim(),
-      store:r[3].trim(),goal,mtd,today,vari,rem,pace,
+      store:r[3].trim(),idKey:km?km[1].trim():r[3].trim(),goal,mtd,today,vari,rem,pace,
       qpayT:r[41],convT:r[42],qpayM:r[43],convM:r[44],featT:r[45],featM:r[46],topFeat:(r[51]||'').trim()});
   }
   return {meta,stores};
@@ -226,6 +238,97 @@ function tableHTML(vis,pf){
   </table></div>`;
 }
 function setSort(i){sortIdx=i;localStorage.setItem('sortIdx',i);render()}
+function setTrendIdx(i){trendIdx=i;localStorage.setItem('trendIdx',i);render()}
+
+// Daily Perf Data: col0 date, col1 SAP, col2 store id, col5 New All, col6 New Voice, col26 BTS, col29 HINT
+const DAILY_COL={0:5,1:6,2:29,3:26}; // metric index -> daily column (MAGENTA n/a)
+function buildDaily(rows){
+  const recs=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[0])continue;            // separator rows
+    if(!r[1]&&!r[2])continue;         // totals rows
+    const km=String(r[2]).match(/\(S\)\s*(.+)$/);
+    recs.push({date:r[0].trim(),key:km?km[1].trim():null,
+      vals:{0:num(r[5]),1:num(r[6]),2:num(r[29]),3:num(r[26])}});
+  }
+  return recs;
+}
+function parseMDY(s){const p=s.split('/');return new Date(+p[2],+p[0]-1,+p[1])}
+function fmtMD(d){return (d.getMonth()+1)+'/'+d.getDate()}
+
+function trendHTML(){
+  let chips='';
+  NAMES.forEach((n,i)=>{
+    const dis=DAILY_COL[i]===undefined;
+    chips+=`<button class="chip ${i===trendIdx?'active':''} ${dis?'dim':''}" ${dis?'disabled title="Not in Daily Perf Data tab"':''} onclick="setTrendIdx(${i})">${n}</button>`;
+  });
+  return `<div class="trend-box">
+    <div class="trend-head"><span>${chips}</span><span class="trend-note" id="trendNote"></span></div>
+    <div class="chart-holder"><canvas id="trendChart"></canvas></div>
+    <div class="trend-stats" id="trendStats"></div>
+  </div>`;
+}
+
+function drawTrend(vis,pf){
+  if(typeof Chart==='undefined'){document.getElementById('trendNote').textContent='Chart library failed to load.';return}
+  if(DAILY_COL[trendIdx]===undefined)trendIdx=0;
+  const m=trendIdx;
+  const meta=model.meta;
+  const start=parseMDY(meta.reportDate);start.setDate(1);
+  const eom=parseMDY(meta.eom);
+  const nDays=eom.getDate();
+  const labels=[];for(let d=1;d<=nDays;d++)labels.push(fmtMD(new Date(start.getFullYear(),start.getMonth(),d)));
+  const goalTotal=vis.reduce((t,s)=>t+s.goal[m],0);
+  const mtd=vis.reduce((t,s)=>t+s.mtd[m],0);
+  const goalLine=labels.map((_,i)=>+(goalTotal*(i+1)/nDays).toFixed(1));
+  // filter daily records
+  const noFilter=state.market==='__all__'&&state.dealer==='__all__';
+  const keys=new Set(vis.map(s=>s.idKey));
+  const dayMap={};
+  (daily||[]).forEach(r=>{
+    const inSet=r.key?keys.has(r.key):noFilter;
+    if(!inSet)return;
+    dayMap[r.date]=(dayMap[r.date]||0)+r.vals[m];
+  });
+  const dates=Object.keys(dayMap).sort((a,b)=>parseMDY(a)-parseMDY(b));
+  const dailyData=labels.map(()=>null);
+  dates.forEach(dt=>{const i=parseMDY(dt).getDate()-1;if(i>=0&&i<nDays)dailyData[i]=dayMap[dt]});
+  // cumulative actual: anchor so the last daily date equals current MTD
+  const cum=labels.map(()=>null);
+  if(dates.length){
+    const winSum=dates.reduce((t,d)=>t+dayMap[d],0);
+    let run=mtd-winSum;
+    const firstIdx=parseMDY(dates[0]).getDate()-1;
+    if(firstIdx-1>=0)cum[firstIdx-1]=run;
+    dates.forEach(dt=>{const i=parseMDY(dt).getDate()-1;run+=dayMap[dt];if(i>=0&&i<nDays)cum[i]=run});
+  }
+  const todayIdx=parseMDY(meta.reportDate).getDate()-1;
+  const paceTarget=goalLine[todayIdx];
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById('trendChart'),{
+    data:{labels,datasets:[
+      {type:'line',label:'Actual (cumulative)',data:cum,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.25,spanGaps:true,pointRadius:3,borderWidth:2.5},
+      {type:'line',label:'Goal pace',data:goalLine,borderColor:'#9ca3af',borderDash:[6,5],pointRadius:0,borderWidth:2},
+      {type:'bar',label:'Daily adds',data:dailyData,backgroundColor:'rgba(22,163,74,.45)',yAxisID:'y2',barPercentage:.7}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:14,font:{size:11}}}},
+      scales:{
+        y:{beginAtZero:true,title:{display:true,text:NAMES[m]+' (cumulative)',font:{size:11}},grid:{color:'#eef1f6'}},
+        y2:{beginAtZero:true,position:'right',title:{display:true,text:'Daily adds',font:{size:11}},grid:{display:false}},
+        x:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,autoSkip:true}}
+      }}
+  });
+  const gap=mtd-paceTarget;
+  document.getElementById('trendNote').textContent=`Daily history available from ${dates[0]||'n/a'} (sheet keeps recent days; the line extends automatically as days accumulate)`;
+  document.getElementById('trendStats').innerHTML=
+    `<span>MTD: <strong>${mtd.toLocaleString()}</strong></span>
+     <span>Pace target today: <strong>${Math.round(paceTarget).toLocaleString()}</strong></span>
+     <span>Gap vs pace: <strong style="color:${gap>=0?'var(--green)':'var(--red)'}">${gap>=0?'+':''}${Math.round(gap).toLocaleString()}</strong></span>
+     <span>Month goal: <strong>${goalTotal.toLocaleString()}</strong></span>
+     <span>To go: <strong>${(goalTotal-mtd).toLocaleString()}</strong> in ${meta.daysLeft} days (${Math.ceil((goalTotal-mtd)/Math.max(+meta.daysLeft,1)).toLocaleString()}/day)</span>`;
+}
 
 function cardHTML(s){
   const [cls,lbl]=badgeFor(s.pace[0]);
@@ -277,6 +380,7 @@ function render(){
     `Movement today as of <strong>${esc(meta.asOf||meta.reportDate)}</strong> · ${(pf*100).toFixed(0)}% through month (${esc(meta.daysLeft)} days remaining) · On-target % = performance vs. MTD pace goal`;
   document.getElementById('btnTable').classList.toggle('active',view==='table');
   document.getElementById('btnCards').classList.toggle('active',view==='cards');
+  document.getElementById('btnTrend').classList.toggle('active',view==='trend');
   const markets=[...new Set(stores.map(s=>s.market))].sort();
   const dealers=[...new Set(stores.map(s=>s.dealer))].sort();
   if(state.market!=='__all__'&&!markets.includes(state.market))state.market='__all__';
@@ -309,7 +413,8 @@ function render(){
   const tot=tdy.reduce((a,b)=>a+b,0);
   document.getElementById('summary').innerHTML=
     `<div class="sum-card today-card"><div class="sum-label">Movement Today</div><div class="sum-val">+${tot}</div><div class="sum-sub">${tdy.map((v,i)=>NAMES[i]+' +'+v).join(' · ')}</div></div>`+sumHTML;
-  document.getElementById('content').innerHTML=view==='table'?tableHTML(vis,pf):cardsHTML(vis,pf);
+  document.getElementById('content').innerHTML=view==='table'?tableHTML(vis,pf):view==='cards'?cardsHTML(vis,pf):trendHTML();
+  if(view==='trend')drawTrend(vis,pf);
   document.getElementById('countLine').textContent=`Showing ${vis.length} of ${stores.length} stores`;
   document.getElementById('loading').style.display='none';
   document.getElementById('foot').textContent=`Source: Month-To-Date Perf (Google Sheet) · Sorted worst-first · Auto-refreshes every 10 minutes`;
@@ -322,6 +427,10 @@ async function loadData(manual){
   for(const url of URLS){
     try{const r=await fetch(url+'&t='+Date.now(),{cache:'no-store'});if(r.ok){text=await r.text();break}}catch(e){}
   }
+  try{
+    const rd=await fetch(DAILY_URL+'&t='+Date.now(),{cache:'no-store'});
+    if(rd.ok)daily=buildDaily(parseCSV(await rd.text()));
+  }catch(e){daily=daily||[]}
   const banner=document.getElementById('errBanner');
   if(!text){
     banner.style.display='block';

@@ -700,6 +700,10 @@ function screenDetail(){
   });
   let feat=`${s.featM}/box MTD`;
   if(s.featT&&!/^\$\s*0(\.00)?\s*$|^\$\s*-/.test(s.featT.trim()))feat+=` · ${s.featT} today`;
+  const convMpct=pf(s.convM),convTpct=pf(s.convT);
+  const convDiff=convTpct-convMpct;
+  const convDiffColor=convDiff>=0?'var(--green)':'var(--red)';
+  const convDiffLabel=convDiff>=0?`▲ ${convDiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(convDiff).toFixed(1)}% below MTD`;
   const e=elb&&elb.byStore[s.store];
   let elbHead='';
   if(e){
@@ -724,9 +728,8 @@ function screenDetail(){
     ${mimPanel(s)}
     <div class="panel"><h3>Conversion & features</h3>
       <div class="statline"><span>Conversion MTD</span><b>${esc(s.convM)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayM)} QPAY)</span></b></div>
-      <div class="statline"><span>Conversion today</span><b>${esc(s.convT)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayT)} QPAY)</span></b></div>
+      <div class="statline"><span>Conversion today</span><b style="display:flex;align-items:center;gap:8px">${esc(s.convT)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayT)} QPAY)</span><span style="font-size:.68rem;font-weight:700;color:${convDiffColor}">${convDiffLabel}</span></b></div>
       <div class="statline"><span>Feature revenue</span><b>${esc(feat)}</b></div>
-      ${s.topFeat?`<div class="statline"><span>Top feature</span><b>${esc(s.topFeat)}</b></div>`:''}
     </div>
   </div>`;
 }

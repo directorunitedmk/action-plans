@@ -153,7 +153,8 @@ const ELB_CATS=[['Prepaid Phone Acts %',20,17,18],['BTS %',5,19,20],['HSI %',10,
 let model=null,daily=[],mim=null,elb=null;
 // Read dealer lock from URL param (?dealer=NAME)
 const URL_DEALER=decodeURIComponent((new URLSearchParams(window.location.search).get('dealer')||'').trim())||null;
-let nav={screen:'role',role:null,dealer:URL_DEALER,store:null};
+const URL_VIEW=(new URLSearchParams(window.location.search).get('view')||'').toLowerCase();
+let nav={screen:URL_VIEW==='dm'?'dm':'role',role:URL_VIEW==='dm'?'manager':null,dealer:URL_DEALER,store:null,prevScreen:null};
 
 /* ---------- parsing ---------- */
 function parseCSV(text){
@@ -463,10 +464,11 @@ function rankSpark(hist,dates,h=90){
 /* ---------- navigation ---------- */
 function go(patch){Object.assign(nav,patch);renderApp()}
 function backTarget(){
-  if(nav.screen==='detail')return nav.role==='manager'?{screen:'dash'}:{screen:'stores'};
+  if(nav.screen==='detail')return nav.prevScreen==='dm'?{screen:'dm'}:nav.role==='manager'?{screen:'dash'}:{screen:'stores'};
   if(nav.screen==='dash'||nav.screen==='stores')return URL_DEALER?{screen:'role'}:{screen:'dealer'};
   if(nav.screen==='dealer')return {screen:'role',role:null,dealer:null};
   if(nav.screen==='links')return {screen:'role'};
+  if(nav.screen==='dm')return null;
   return null;
 }
 function dealersList(){
@@ -727,27 +729,168 @@ function screenLinks(){
   return h+'</div>';
 }
 
+/* ---------- Director Mode (DM) ---------- */
+let dmFilters={market:'',dealer:'',sort:'urgency',q:''};
+function screenDM(){
+  const all=model.stores;
+  const markets=[...new Set(all.map(s=>s.market))].sort();
+  const dealers=[...new Set(all.map(s=>s.dealer))].sort();
+  let list=all.filter(s=>{
+    if(dmFilters.market&&s.market!==dmFilters.market)return false;
+    if(dmFilters.dealer&&s.dealer!==dmFilters.dealer)return false;
+    if(dmFilters.q){const q=dmFilters.q.toLowerCase();if(!s.store.toLowerCase().includes(q)&&!s.dealer.toLowerCase().includes(q)&&!(MKT_ABBR[s.market]||s.market).toLowerCase().includes(q))return false}
+    return true;
+  });
+  if(dmFilters.sort==='urgency')list=list.slice().sort((a,b)=>a.pace[0]-b.pace[0]);
+  else if(dmFilters.sort==='elb')list=list.slice().sort((a,b)=>{const ea=elb&&elb.byStore[a.store],eb2=elb&&elb.byStore[b.store];return(ea?ea.rank:99999)-(eb2?eb2.rank:99999)});
+  else if(dmFilters.sort==='dealer')list=list.slice().sort((a,b)=>a.dealer.localeCompare(b.dealer)||a.pace[0]-b.pace[0]);
+  else if(dmFilters.sort==='market')list=list.slice().sort((a,b)=>a.market.localeCompare(b.market)||a.pace[0]-b.pace[0]);
+  else if(dmFilters.sort==='store')list=list.slice().sort((a,b)=>a.store.localeCompare(b.store));
+
+  // sub-dealer rollup
+  const dealerMap={};
+  all.forEach(s=>{if(!dealerMap[s.dealer])dealerMap[s.dealer]={stores:[],name:s.dealer};dealerMap[s.dealer].stores.push(s)});
+  const dealerRollup=Object.values(dealerMap).map(d=>{
+    const p=pacePct(d.stores,0),crit=d.stores.filter(s=>s.pace[0]<70).length;
+    const ea=elbAgg(d.stores);
+    const today=d.stores.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
+    return{...d,pace:p,crit,elb:ea,today};
+  }).sort((a,b)=>a.pace-b.pace);
+
+  const mktOpts=markets.map(m=>`<option value="${esc(m)}"${dmFilters.market===m?'selected':''}>${esc(MKT_ABBR[m]||m)}</option>`).join('');
+  const dlrOpts=dealers.map(d=>`<option value="${esc(d)}"${dmFilters.dealer===d?'selected':''}>${esc(d)}</option>`).join('');
+
+  let h=`<div class="screen">`;
+
+  // filter bar
+  h+=`<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">
+    <input placeholder="🔍 Search store / dealer / market…" value="${esc(dmFilters.q)}" oninput="dmFilters.q=this.value;renderApp()" style="flex:2;min-width:150px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.8rem">
+    <select onchange="dmFilters.market=this.value;renderApp()" style="flex:1;min-width:90px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="">All Markets</option>${mktOpts}
+    </select>
+    <select onchange="dmFilters.dealer=this.value;renderApp()" style="flex:1;min-width:100px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="">All Sub-Dealers</option>${dlrOpts}
+    </select>
+    <select onchange="dmFilters.sort=this.value;renderApp()" style="flex:1;min-width:100px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="urgency"${dmFilters.sort==='urgency'?'selected':''}>⬆ Urgency</option>
+      <option value="elb"${dmFilters.sort==='elb'?'selected':''}>🏆 ELB Rank</option>
+      <option value="dealer"${dmFilters.sort==='dealer'?'selected':''}>👤 Sub-Dealer</option>
+      <option value="market"${dmFilters.sort==='market'?'selected':''}>🗺 Market</option>
+      <option value="store"${dmFilters.sort==='store'?'selected':''}>🏪 Store Name</option>
+    </select>
+  </div>`;
+
+  // summary cards scoped to filtered list
+  h+=summaryCards(list);
+
+  // who to call right now
+  const callList=dealerRollup.filter(d=>d.crit>0||d.pace<80).slice(0,6);
+  if(callList.length){
+    h+=`<div class="panel" style="border-left:3px solid var(--red)"><h3 style="color:var(--red)">📞 Who to call right now · sorted by urgency</h3>`;
+    callList.forEach(d=>{
+      const worst=d.stores.slice().sort((a,b)=>a.pace[0]-b.pace[0])[0];
+      let why='';
+      if(d.crit>0)why=`${d.crit} store${d.crit>1?'s':''} below 70% pace`;
+      else why=`${d.pace.toFixed(0)}% avg on target — needs push`;
+      const elbInfo=d.elb?` · ELB avg #${d.elb.avg.toLocaleString()}`:'';
+      const todayInfo=d.today>0?` · +${d.today} today`:'';
+      h+=`<div class="statline" style="cursor:pointer" onclick="dmFilters.dealer='${esc(d.name)}';renderApp()">
+        <span style="flex:1;min-width:0">
+          <b style="font-size:.88rem">${esc(d.name)}</b>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:1px">${why}${elbInfo}${todayInfo}</div>
+          <div style="font-size:.68rem;color:var(--muted)">Worst: ${esc(title(worst.store))} at ${worst.pace[0].toFixed(0)}% · ${worst.mtd[0]}/${worst.goal[0]} New All</div>
+        </span>
+        <span style="color:${colorFor(d.pace)};font-weight:700;font-size:.95rem">${d.pace.toFixed(0)}%</span>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  // attack board across visible stores (top items only)
+  const allBrief=briefFor(list).slice(0,8);
+  if(allBrief.length){
+    const hr=Math.floor(hoursOpen());
+    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open':'pre-open'} · top priorities across ${list.length} stores</span></div>`;
+    allBrief.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it">✕</button></div>`});
+    h+='</div>';
+  }
+
+  // sub-dealer comparison table (only when no dealer filter)
+  if(!dmFilters.dealer){
+    h+=`<div class="panel"><h3>📊 Sub-dealer snapshot · tap to drill down</h3>`;
+    dealerRollup.forEach(d=>{
+      const ea=d.elb;
+      const elbTxt=ea?`ELB #${ea.avg.toLocaleString()} ${moveHTML(ea.move)}`:'—';
+      const criTag=d.crit?`<span style="color:var(--red);font-size:.68rem;font-weight:700"> ● ${d.crit} critical</span>`:'';
+      const tdy=d.today>0?`<span style="color:var(--blue);font-size:.68rem"> +${d.today} today</span>`:'';
+      h+=`<div class="statline" style="cursor:pointer;align-items:flex-start" onclick="dmFilters.dealer='${esc(d.name)}';renderApp()">
+        <span style="flex:1;min-width:0">
+          <b>${esc(d.name)}</b>${criTag}${tdy}
+          <div style="font-size:.66rem;color:var(--muted)">${d.stores.length} stores · ${esc(elbTxt)}</div>
+        </span>
+        <span style="color:${colorFor(d.pace)};font-weight:700">${d.pace.toFixed(0)}%</span>
+      </div>`;
+    });
+    h+='</div>';
+  } else {
+    h+=`<button style="font-size:.74rem;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;margin-bottom:12px" onclick="dmFilters.dealer='';renderApp()">✕ Clear filter: ${esc(dmFilters.dealer)}</button>`;
+  }
+
+  // ELB leaderboard
+  h+=elbLeaderboard(list);
+
+  // store list
+  h+=`<div class="list-title">${list.length} store${list.length!==1?'s':''} · ${dmFilters.sort==='urgency'?'worst first':dmFilters.sort}</div>`;
+  list.forEach(s=>{
+    const p=s.pace[0];
+    const e=elb&&elb.byStore[s.store];
+    const hh=e?e.hist.filter(x=>x>0):[];
+    const mov=hh.length>=2?hh[hh.length-2]-hh[hh.length-1]:0;
+    const right=e
+      ?`<span class="pct" style="color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><div class="rsub">ELB ${moveHTML(mov)}</div>`
+      :`<span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">${s.mtd[0]}/${s.goal[0]}</div>`;
+    const sub2=`${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · ${p.toFixed(0)}% on target`;
+    h+=`<button class="item" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'dm'})">
+      <span class="av" style="background:${p>=100?'rgba(22,163,74,.1)':p>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};color:${hexFor(p)}">${initials(s.store)}</span>
+      <span class="info"><h3>${esc(title(s.store))}</h3><p>${sub2}</p></span>
+      <span class="right">${right}</span></button>`;
+  });
+
+  return h+liveBar()+'</div>';
+}
+
 function renderApp(){
   if(!model)return;
   const root=document.getElementById('root');
   const bar=document.getElementById('appbar');
   const tEl=document.getElementById('barTitle'),sEl=document.getElementById('barSub');
   if(nav.screen==='role'){bar.style.display='none';root.innerHTML=screenRole()}
+  else if(nav.screen==='dm'){
+    bar.style.display='flex';
+    tEl.textContent='Director View';
+    const fc=dmFilters.market||dmFilters.dealer?` · filtered`:'';
+    sEl.textContent=model.stores.length+' stores · all sub-dealers'+fc;
+    root.innerHTML=screenDM();
+  }
   else{
     bar.style.display='flex';
     const dn=nav.dealer==='__all__'?'All Sub-Dealers':nav.dealer;
     if(nav.screen==='dealer'){tEl.textContent=nav.role==='manager'?'Manager':'Employee';sEl.textContent='Select sub-dealer';root.innerHTML=screenDealer()}
     if(nav.screen==='dash'){tEl.textContent=dn;sEl.textContent='Manager dashboard · '+storesOf().length+' stores';root.innerHTML=screenDash()}
     if(nav.screen==='stores'){tEl.textContent=dn;sEl.textContent='Choose your store';root.innerHTML=screenStores()}
-    if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=dn+' · store detail';root.innerHTML=screenDetail()}
+    if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=(nav.prevScreen==='dm'?'Director View':dn)+' · store detail';root.innerHTML=screenDetail()}
     if(nav.screen==='links'){tEl.textContent='Sub-Dealer Links';sEl.textContent='';root.innerHTML=screenLinks()}
   }
   document.getElementById('foot').textContent='Tomorrow Telecom · Month-To-Date Perf + MiM DAL + ELB Ranks (Google Sheet) · '+(model.meta.paceFrac*100).toFixed(0)+'% through month';
   attachBriefHandlers();
+  updateBackBtn();
   if(confettiPending){confettiPending=false;fireConfetti()}
 }
-document.getElementById('btnBack').addEventListener('click',()=>{const t=backTarget();if(t)go(t)});
-document.getElementById('btnHome').addEventListener('click',()=>go({screen:'role',role:null,dealer:null,store:null}));
+document.getElementById('btnBack').addEventListener('click',()=>{const t=backTarget();if(t)go(t);});
+// hide back btn when there's nowhere to go back to
+function updateBackBtn(){try{const t=backTarget();document.getElementById('btnBack').style.visibility=t?'visible':'hidden';}catch(e){}}
+
+document.getElementById('btnHome').addEventListener('click',()=>URL_VIEW==='dm'?go({screen:'dm',store:null,prevScreen:null}):go({screen:'role',role:null,dealer:null,store:null}));
 
 async function loadData(){
   try{

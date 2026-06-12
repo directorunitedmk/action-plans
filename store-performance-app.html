@@ -56,7 +56,7 @@
   .bitem.warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
   .bitem.win{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
   .bitem.party{background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:2px solid #34d399;color:#065f46;font-weight:600}
-  .brief-head{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px}
+  .brief-head{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px;position:sticky;top:66px;z-index:9;background:var(--bg);padding:6px 2px;}
   .brief-head .clock{color:var(--blue);font-weight:700}
   .sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
   .sum{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:10px 11px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
@@ -378,7 +378,7 @@ function briefHTML(list){
   const items=briefFor(list);
   if(!items.length)return '';
   const hr=Math.floor(hoursOpen());
-  let h=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open (10am)':'pre-open'} · updates every 10 min · swipe or ✕ when handled</span></div>`;
+  let h=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open (10am)':'pre-open'} · updates every 10 min</span></div>`;
   items.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it — hide for now">✕</button></div>`});
   return h+'</div>';
 }
@@ -810,7 +810,7 @@ function screenDM(){
   const allBrief=briefFor(list).slice(0,8);
   if(allBrief.length){
     const hr=Math.floor(hoursOpen());
-    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open':'pre-open'} · top priorities across ${list.length} stores</span></div>`;
+    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open (10am)':'pre-open'} · updates every 10 min</span></div>`;
     allBrief.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it">✕</button></div>`});
     h+='</div>';
   }
@@ -881,7 +881,7 @@ function renderApp(){
     if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=(nav.prevScreen==='dm'?'Director View':dn)+' · store detail';root.innerHTML=screenDetail()}
     if(nav.screen==='links'){tEl.textContent='Sub-Dealer Links';sEl.textContent='';root.innerHTML=screenLinks()}
   }
-  document.getElementById('foot').textContent='Tomorrow Telecom · Month-To-Date Perf + MiM DAL + ELB Ranks (Google Sheet) · '+(model.meta.paceFrac*100).toFixed(0)+'% through month';
+  document.getElementById('foot').textContent='Tomorrow Telecom · Performance Dashboard · % of Days Passed: '+(model.meta.paceFrac*100).toFixed(2)+'%';
   attachBriefHandlers();
   updateBackBtn();
   if(confettiPending){confettiPending=false;fireConfetti()}

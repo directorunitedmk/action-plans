@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>United MK · Store Performance</title>
+<title>Tomorrow Telecom · Store Performance</title>
 <style>
   :root{--bg:#f1f4f9;--card:#ffffff;--text:#16203a;--muted:#64748b;--border:#e2e8f0;--track:#eef1f6;
     --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb;--magenta:#e20074;
@@ -136,6 +136,18 @@ const MAIN_URL=U('gid='+GID), DAILY_URL=U('sheet='+encodeURIComponent('Daily Per
 const REFRESH_MS=10*60*1000, OPEN_HOUR=10;
 const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
 const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid'};
+const ACCOUNTS={
+  'FERGUSON':'BBC Wireless LLC','SAMUEL':'BBC Wireless LLC','WESTERN CENTER':'BBC Wireless LLC','ROSEDALE':'BBC Wireless LLC','BEACH WESTERN':'BBC Wireless LLC','HALTOM':'BBC Wireless LLC','ROUND GROVE':'BBC Wireless LLC',
+  'NORTH MAIN':'Gig Enterprise LLC','SH-121':'Gig Enterprise LLC',
+  'JACKSBORO':'Jacksboro Telecom, LLC','MIDWESTERN':'Jacksboro Telecom, LLC','SOUTHWEST':'Jacksboro Telecom, LLC',
+  'LEWISVILLE':'King Tel Communications LLC',
+  '6TH':'MBT Communication LLC','WEST PIONEER':'MBT Communication LLC','GREEN OAKS':'MBT Communication LLC','MATLOCK':'MBT Communication LLC','I-20':'MBT Communication LLC','FRANKFORD':'MBT Communication LLC','MONTFORT':'MBT Communication LLC','HARRY HINES':'MBT Communication LLC',
+  'BELTLINE':'Ready to Be Picked, Inc.','MOTLEY':'Ready to Be Picked, Inc.','BROADWAY':'Ready to Be Picked, Inc.','FRONTAGE':'Ready to Be Picked, Inc.',
+  'CAMP BOWIE':'Simple Solution Enterprise LLC','SYCAMORE':'Simple Solution Enterprise LLC',
+  'DECATUR':'SMART 5G COMMUNICATION LLC','DENTON':'SMART 5G COMMUNICATION LLC'
+};
+const acctOf=st=>ACCOUNTS[st]||'';
+function acctsOf(list){return [...new Set(list.map(s=>acctOf(s.store)).filter(Boolean))]}
 const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
 const ELB_CATS=[['Prepaid Phone Acts %',20,17,18],['BTS %',5,19,20],['HSI %',10,21,22],['MIM (Magenta)',20,23,24],['Feature $',10,25,26],['ACT Retention (95d)',10,27,28],['Feature Retention (95d)',10,29,30],['Flagged Activations',10,31,32],['CSAT',5,33,34]];
 let model=null,daily=[],mim=null,elb=null;
@@ -480,7 +492,7 @@ const moveHTML=m=>m>0?`<span class="chg up">▲ ${m.toLocaleString()}</span>`:m<
 /* ---------- screens ---------- */
 function screenRole(){
   return `<div class="screen">
-    <div class="hero"><div class="logo">📶</div><h2>United MK Performance</h2><p>Live store metrics, straight from the field.<br>Who's checking in?</p></div>
+    <div class="hero"><div class="logo">📶</div><h2>Tomorrow Telecom</h2><p>Store performance, live from the field.<br>Who's checking in?</p></div>
     <button class="role-btn" onclick="go({screen:'dealer',role:'employee'})">
       <span class="ic emp">👤</span><span><h3>I'm an Employee</h3><p>What should I attack at my store right now?</p></span><span class="chev">›</span></button>
     <button class="role-btn" onclick="go({screen:'dealer',role:'manager'})">
@@ -504,9 +516,10 @@ function screenDealer(){
   }
   dealersList().forEach(d=>{
     const p=pacePct(d.stores,0);
+    const accts=acctsOf(d.stores);
     h+=`<button class="item" onclick="go({screen:nav.role==='manager'?'dash':'stores',dealer:'${esc(d.name)}'})">
       <span class="av">${initials(d.name)}</span>
-      <span class="info"><h3>${esc(d.name)}</h3><p>${d.stores.length} store${d.stores.length>1?'s':''} · ${p.toFixed(0)}% on target</p></span>
+      <span class="info"><h3>${esc(d.name)}</h3><p>${accts.length?esc(accts.join(' · '))+'<br>':''}${d.stores.length} store${d.stores.length>1?'s':''} · ${p.toFixed(0)}% on target</p></span>
       <span class="right">${rightStat(d.stores)}</span></button>`;
   });
   return h+liveBar()+'</div>';
@@ -545,7 +558,7 @@ function storeRow(s){
   }
   return `<button class="item" onclick="go({screen:'detail',store:'${esc(s.store)}'})">
     <span class="av" style="background:${p>=100?'rgba(22,163,74,.1)':p>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};color:${hexFor(p)}">${initials(s.store)}</span>
-    <span class="info"><h3>${esc(title(s.store))}</h3><p>${esc(MKT_ABBR[s.market]||s.market)} · ${esc(s.rdm)} · ${p.toFixed(0)}% on target (${s.mtd[0]}/${s.goal[0]})</p></span>
+    <span class="info"><h3>${esc(title(s.store))}</h3><p>${acctOf(s.store)?esc(acctOf(s.store))+' · ':''}${esc(MKT_ABBR[s.market]||s.market)} · ${p.toFixed(0)}% on target (${s.mtd[0]}/${s.goal[0]})</p></span>
     <span class="right">${right}</span></button>`;
 }
 function elbLeaderboard(list){
@@ -654,7 +667,7 @@ function screenDetail(){
     ${briefHTML([s])}
     <div class="det-head">
       <div class="row1"><h2>📍 ${esc(title(s.store))}</h2><span class="badge ${cls}">${lbl}</span></div>
-      <div class="who">${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · RDM ${esc(s.rdm)}</div>
+      <div class="who">${acctOf(s.store)?esc(acctOf(s.store))+' · ':''}${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · RDM ${esc(s.rdm)}</div>
       ${elbHead}
       <div style="font-size:.78rem;color:var(--muted);margin-top:8px"><b style="color:${colorFor(s.pace[0])}">${s.pace[0].toFixed(0)}%</b> of New All pace target · ${s.mtd[0]}/${s.goal[0]} goal · ${s.rem[0]} to go in ${model.meta.daysLeft} days</div>
     </div>
@@ -689,7 +702,7 @@ function renderApp(){
     if(nav.screen==='stores'){tEl.textContent=dn;sEl.textContent='Choose your store';root.innerHTML=screenStores()}
     if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=dn+' · store detail';root.innerHTML=screenDetail()}
   }
-  document.getElementById('foot').textContent='United MK · Month-To-Date Perf + MiM DAL + ELB Ranks (Google Sheet) · '+(model.meta.paceFrac*100).toFixed(0)+'% through month';
+  document.getElementById('foot').textContent='Tomorrow Telecom · Month-To-Date Perf + MiM DAL + ELB Ranks (Google Sheet) · '+(model.meta.paceFrac*100).toFixed(0)+'% through month';
   attachBriefHandlers();
   if(confettiPending){confettiPending=false;fireConfetti()}
 }

@@ -757,7 +757,7 @@ function screenLinks(){
 /* ---------- Today's performance table ---------- */
 function todayTable(list,prevScreen){
   const sorted=list.slice().sort((a,b)=>b.today.reduce((s,v)=>s+v,0)-a.today.reduce((s,v)=>s+v,0));
-  const colHeaders=['New All','Voice','HINT','BTS','Mag'];
+  const colHeaders=['New All','Voice','HINT','BTS'];
   let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
     <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:380px">
@@ -769,15 +769,16 @@ function todayTable(list,prevScreen){
     const total=s.today.reduce((sum,v)=>sum+v,0);
     h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
       <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
-    s.today.forEach(v=>{
+    s.today.slice(0,4).forEach(v=>{
       const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
       h+=`<td style="text-align:center;padding:5px 5px;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
     });
-    const tc=total>0?'var(--green)':'var(--red)';
-    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${total>0?'+'+total:'—'}</td></tr>`;
+    const rowTotal=s.today.slice(0,4).reduce((sum,v)=>sum+v,0);
+    const tc=rowTotal>0?'var(--green)':'var(--red)';
+    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td></tr>`;
   });
   // totals row
-  const tots=NAMES.map((_,i)=>list.reduce((s,st)=>s+st.today[i],0));
+  const tots=[0,1,2,3].map(i=>list.reduce((s,st)=>s+st.today[i],0));
   const grand=tots.reduce((s,v)=>s+v,0);
   h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
   tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);

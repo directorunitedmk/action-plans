@@ -134,7 +134,6 @@
   <div id="loading">Loading live data from Google Sheet…</div>
   <footer id="foot"></footer>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
 const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM', GID='593325688';
 const URLS=[
@@ -265,13 +264,12 @@ function trendHTML(){
   });
   return `<div class="trend-box">
     <div class="trend-head"><span>${chips}</span><span class="trend-note" id="trendNote"></span></div>
-    <div class="chart-holder"><canvas id="trendChart"></canvas></div>
+    <div class="chart-holder" id="chartHolder"></div>
     <div class="trend-stats" id="trendStats"></div>
   </div>`;
 }
 
 function drawTrend(vis,pf){
-  if(typeof Chart==='undefined'){document.getElementById('trendNote').textContent='Chart library failed to load.';return}
   if(DAILY_COL[trendIdx]===undefined)trendIdx=0;
   const m=trendIdx;
   const meta=model.meta;
@@ -305,21 +303,57 @@ function drawTrend(vis,pf){
   }
   const todayIdx=parseMDY(meta.reportDate).getDate()-1;
   const paceTarget=goalLine[todayIdx];
-  if(chart)chart.destroy();
-  chart=new Chart(document.getElementById('trendChart'),{
-    data:{labels,datasets:[
-      {type:'line',label:'Actual (cumulative)',data:cum,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.25,spanGaps:true,pointRadius:3,borderWidth:2.5},
-      {type:'line',label:'Goal pace',data:goalLine,borderColor:'#9ca3af',borderDash:[6,5],pointRadius:0,borderWidth:2},
-      {type:'bar',label:'Daily adds',data:dailyData,backgroundColor:'rgba(22,163,74,.45)',yAxisID:'y2',barPercentage:.7}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'bottom',labels:{boxWidth:14,font:{size:11}}}},
-      scales:{
-        y:{beginAtZero:true,title:{display:true,text:NAMES[m]+' (cumulative)',font:{size:11}},grid:{color:'#eef1f6'}},
-        y2:{beginAtZero:true,position:'right',title:{display:true,text:'Daily adds',font:{size:11}},grid:{display:false}},
-        x:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,autoSkip:true}}
-      }}
+  // ===== self-contained SVG chart =====
+  const W=1000,H=420,L=64,R=56,T=18,B=46;
+  const pw=W-L-R,ph=H-T-B;
+  const yMax=Math.max(goalTotal,...cum.filter(v=>v!=null),1)*1.06;
+  const dMax=Math.max(...dailyData.filter(v=>v!=null),1)*1.6;
+  const X=i=>L+pw*(i+.5)/nDays;
+  const Y=v=>T+ph*(1-v/yMax);
+  const Y2=v=>T+ph*(1-v/dMax);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,system-ui,sans-serif">`;
+  // gridlines + y labels
+  for(let g=0;g<=4;g++){
+    const v=yMax*g/4,y=Y(v);
+    svg+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#eef1f6" stroke-width="1"/>`;
+    svg+=`<text x="${L-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#64748b">${Math.round(v).toLocaleString()}</text>`;
+  }
+  // x labels (every 2 days)
+  labels.forEach((lb,i)=>{
+    if(i%2===0)svg+=`<text x="${X(i)}" y="${H-B+16}" text-anchor="middle" font-size="10" fill="#64748b">${lb}</text>`;
   });
+  // daily bars (right axis)
+  const bw=Math.max(4,pw/nDays*.55);
+  dailyData.forEach((v,i)=>{
+    if(v==null)return;
+    const y=Y2(v);
+    svg+=`<rect x="${X(i)-bw/2}" y="${y}" width="${bw}" height="${T+ph-y}" fill="rgba(22,163,74,.45)" rx="2"><title>${labels[i]}: +${v} daily</title></rect>`;
+    svg+=`<text x="${X(i)}" y="${y-4}" text-anchor="middle" font-size="10" fill="#16a34a">+${v}</text>`;
+  });
+  // goal pace dashed line
+  svg+=`<polyline fill="none" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6 5" points="${labels.map((_,i)=>X(i)+','+Y(goalLine[i])).join(' ')}"/>`;
+  // today marker
+  svg+=`<line x1="${X(todayIdx)}" y1="${T}" x2="${X(todayIdx)}" y2="${T+ph}" stroke="#d97706" stroke-width="1" stroke-dasharray="3 3"/>`;
+  svg+=`<text x="${X(todayIdx)}" y="${T-4}" text-anchor="middle" font-size="10" fill="#d97706">today</text>`;
+  // actual cumulative line + area
+  const pts=[];cum.forEach((v,i)=>{if(v!=null)pts.push([X(i),Y(v),v,labels[i]])});
+  if(pts.length){
+    svg+=`<polygon fill="rgba(37,99,235,.07)" points="${pts.map(p=>p[0]+','+p[1]).join(' ')} ${pts[pts.length-1][0]},${T+ph} ${pts[0][0]},${T+ph}"/>`;
+    svg+=`<polyline fill="none" stroke="#2563eb" stroke-width="3" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+    pts.forEach(p=>{svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#2563eb"><title>${p[3]}: ${p[2].toLocaleString()} cumulative</title></circle>`});
+    const lp=pts[pts.length-1];
+    svg+=`<text x="${lp[0]+8}" y="${lp[1]-6}" font-size="12" font-weight="700" fill="#2563eb">${lp[2].toLocaleString()}</text>`;
+  }
+  // goal end label
+  svg+=`<text x="${W-R+6}" y="${Y(goalTotal)+4}" font-size="11" fill="#64748b">goal ${goalTotal.toLocaleString()}</text>`;
+  // legend
+  svg+=`<g font-size="11" fill="#64748b">
+    <line x1="${L}" y1="${H-10}" x2="${L+24}" y2="${H-10}" stroke="#2563eb" stroke-width="3"/><text x="${L+30}" y="${H-6}">Actual (cumulative)</text>
+    <line x1="${L+180}" y1="${H-10}" x2="${L+204}" y2="${H-10}" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6 5"/><text x="${L+210}" y="${H-6}">Goal pace</text>
+    <rect x="${L+300}" y="${H-17}" width="12" height="10" fill="rgba(22,163,74,.45)"/><text x="${L+318}" y="${H-6}">Daily adds (right scale)</text>
+  </g>`;
+  svg+='</svg>';
+  document.getElementById('chartHolder').innerHTML=svg;
   const gap=mtd-paceTarget;
   document.getElementById('trendNote').textContent=`Daily history available from ${dates[0]||'n/a'} (sheet keeps recent days; the line extends automatically as days accumulate)`;
   document.getElementById('trendStats').innerHTML=

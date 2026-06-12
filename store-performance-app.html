@@ -698,6 +698,12 @@ function screenDetail(){
       <div class="foot"><span>Δ pace ${sign(s.vari[i])}</span><span>${s.rem[i]} to go</span></div>
     </div>`;
   });
+  let feat=`${s.featM}/box MTD`;
+  if(s.featT&&!/^\$\s*0(\.00)?\s*$|^\$\s*-/.test(s.featT.trim()))feat+=` · ${s.featT} today`;
+  const convMpct=pf(s.convM),convTpct=pf(s.convT);
+  const convDiff=convTpct-convMpct;
+  const convDiffColor=convDiff>=0?'var(--green)':'var(--red)';
+  const convDiffLabel=convDiff>=0?`▲ ${convDiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(convDiff).toFixed(1)}% below MTD`;
   const e=elb&&elb.byStore[s.store];
   let elbHead='';
   if(e){
@@ -717,6 +723,11 @@ function screenDetail(){
     </div>
     ${elbPanel(s)}
     ${todayTable([s],'detail')}
+    <div class="panel"><h3>Conversion & features</h3>
+      <div class="statline"><span>Conversion MTD</span><b>${esc(s.convM)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayM)} QPAY)</span></b></div>
+      <div class="statline"><span>Conversion today</span><b style="display:flex;align-items:center;gap:8px">${esc(s.convT)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayT)} QPAY)</span><span style="font-size:.68rem;font-weight:700;color:${convDiffColor}">${convDiffLabel}</span></b></div>
+      <div class="statline"><span>Feature revenue</span><b>${esc(feat)}</b></div>
+    </div>
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,120)}</div>
     <div class="panel"><h3>Metrics month-to-date</h3>${mets}</div>
     ${mimPanel(s)}
@@ -790,29 +801,7 @@ function todayTable(list,prevScreen){
   h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
   tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
   h+=`<td style="text-align:center;padding:5px 6px;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td></tr>`;
-  h+='</tbody></table></div>';
-  // conversion footer
-  const totalQpayT=list.reduce((s,st)=>s+num(st.qpayT),0);
-  const totalSalesT=list.reduce((s,st)=>s+Math.round(pf(st.convT)*num(st.qpayT)/100),0);
-  const totalQpayM=list.reduce((s,st)=>s+num(st.qpayM),0);
-  const totalSalesM=list.reduce((s,st)=>s+Math.round(pf(st.convM)*num(st.qpayM)/100),0);
-  const aggConvT=totalQpayT>0?totalSalesT/totalQpayT*100:0;
-  const aggConvM=totalQpayM>0?totalSalesM/totalQpayM*100:0;
-  const cdiff=aggConvT-aggConvM;
-  const ccolor=cdiff>=0?'var(--green)':'var(--red)';
-  const clabel=cdiff>=0?`▲ ${cdiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(cdiff).toFixed(1)}% below MTD`;
-  h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">
-    <span style="color:var(--muted)">Conversion today</span>
-    <span style="display:flex;align-items:center;gap:8px">
-      <b>${aggConvT.toFixed(2)}%</b><span style="color:var(--muted)">(${totalQpayT} QPAY)</span>
-      <span style="font-size:.68rem;font-weight:700;color:${ccolor}">${clabel}</span>
-    </span>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px;font-size:.72rem">
-    <span style="color:var(--muted)">Conversion MTD</span>
-    <span><b>${aggConvM.toFixed(2)}%</b> <span style="color:var(--muted)">(${totalQpayM} QPAY)</span></span>
-  </div>`;
-  return h+'</div>';
+  return h+'</tbody></table></div></div>';
 }
 
 /* ---------- Director Mode (DM) ---------- */

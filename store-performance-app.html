@@ -56,6 +56,8 @@
   .bitem.warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
   .bitem.win{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
   .bitem.party{background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:2px solid #34d399;color:#065f46;font-weight:600}
+  .bitem.zero{background:#3b0000;border:2px solid #dc2626;color:#fca5a5;font-weight:600;animation:zeropulse 1.6s ease-in-out infinite}
+  @keyframes zeropulse{0%,100%{border-color:#dc2626;box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{border-color:#f87171;box-shadow:0 0 0 7px rgba(220,38,38,0)}}
   .brief-head{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px;position:sticky;top:66px;z-index:9;background:var(--bg);padding:6px 2px;}
   .brief-head .clock{color:var(--blue);font-weight:700}
   .sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
@@ -341,6 +343,17 @@ function storeBrief(s){
       });
     }
   }
+  // Zero MTD — darkest flag, escalates with days passed
+  const daysIn=Math.round(model.meta.paceFrac*parseMDY(model.meta.eom).getDate());
+  NAMES.forEach((metName,i)=>{
+    if(s.goal[i]>0&&s.mtd[i]===0){
+      const id=s.store+'|zeromtd'+i;
+      const urgency=daysIn>=10?'🚨🚨':'🚨';
+      items.push({lvl:'zero',ic:urgency,store:s.store,id,
+        t:`<b>${nm} — ZERO ${metName} after ${daysIn} day${daysIn!==1?'s':''} this month.</b> Goal is ${s.goal[i]}. Every day at zero digs a deeper hole. This store needs immediate attention right now.`});
+    }
+  });
+
   return items;
 }
 function briefFor(list){
@@ -370,8 +383,8 @@ function briefFor(list){
     }
   });
   saveMissions(missions);
-  const order={party:0,crit:1,warn:2,win:3};
-  items=wins.concat(items.sort((a,b)=>order[a.lvl]-order[b.lvl]));
+  const order={party:0,zero:1,crit:2,warn:3,win:4};
+  items=wins.concat(items.sort((a,b)=>(order[a.lvl]??5)-(order[b.lvl]??5)));
   return items.filter(i=>!isDismissed(i.id)).slice(0,9);
 }
 function briefHTML(list){

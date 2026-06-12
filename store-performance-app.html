@@ -718,6 +718,7 @@ function screenDetail(){
       <div style="font-size:.78rem;color:var(--muted);margin-top:8px"><b style="color:${colorFor(s.pace[0])}">${s.pace[0].toFixed(0)}%</b> of New All pace target · ${s.mtd[0]}/${s.goal[0]} goal · ${s.rem[0]} to go in ${model.meta.daysLeft} days</div>
     </div>
     ${elbPanel(s)}
+    ${todayTable([s],'detail')}
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,120)}</div>
     <div class="panel"><h3>Metrics month-to-date</h3>${mets}</div>
     ${mimPanel(s)}
@@ -727,7 +728,6 @@ function screenDetail(){
       <div class="statline"><span>Feature revenue</span><b>${esc(feat)}</b></div>
       ${s.topFeat?`<div class="statline"><span>Top feature</span><b>${esc(s.topFeat)}</b></div>`:''}
     </div>
-    ${todayTable([s],'detail')}
   </div>`;
 }
 const fmtAsOf=s=>{if(!s)return'';const m=s.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);if(!m)return s;let h=+m[4],mi=m[5],ap=h>=12?'pm':'am';h=h%12||12;return`${m[1]}/${m[2]}/${m[3]} ${h}:${mi}${ap}`};

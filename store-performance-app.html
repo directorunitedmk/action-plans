@@ -372,7 +372,7 @@ function briefFor(list){
     }
   }
   // check red flags BEFORE building any celebrations
-  const hasRedFlag=items.some(i=>i.lvl==='zero'||i.lvl==='crit');
+  const hasRedFlag=items.some(i=>i.lvl==='zero');
   // celebrations only when no red flags exist
   const wins=[];
   if(!hasRedFlag){

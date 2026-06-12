@@ -492,6 +492,8 @@ function elbAgg(list){
   return n?{avg:Math.round(sum/n),move,n}:null;
 }
 const rankColor=r=>r<=1100?'var(--green)':r<=3300?'var(--amber)':'var(--red)';
+// worst ELB first (highest rank# = worst); no-ELB stores go to the end
+const elbWorstSort=(a,b)=>{const ea=elb&&elb.byStore[a.store],eb2=elb&&elb.byStore[b.store];if(!ea&&!eb2)return b.pace[0]-a.pace[0];if(!ea)return 1;if(!eb2)return -1;return eb2.rank-ea.rank};
 const moveHTML=m=>m>0?`<span class="chg up">▲ ${m.toLocaleString()}</span>`:m<0?`<span class="chg dn">▼ ${(-m).toLocaleString()}</span>`:'<span class="chg flat">—</span>';
 
 /* ---------- screens ---------- */
@@ -598,7 +600,7 @@ function elbLeaderboard(list){
 }
 function screenDash(){
   const list=storesOf();
-  const sorted=list.slice().sort((a,b)=>a.pace[0]-b.pace[0]);
+  const sorted=list.slice().sort(elbWorstSort);
   const se=seriesFor(list,0);
   let h=`<div class="screen">${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,130)}
@@ -741,7 +743,7 @@ function screenDM(){
     if(dmFilters.q){const q=dmFilters.q.toLowerCase();if(!s.store.toLowerCase().includes(q)&&!s.dealer.toLowerCase().includes(q)&&!(MKT_ABBR[s.market]||s.market).toLowerCase().includes(q))return false}
     return true;
   });
-  if(dmFilters.sort==='urgency')list=list.slice().sort((a,b)=>a.pace[0]-b.pace[0]);
+  if(dmFilters.sort==='urgency')list=list.slice().sort(elbWorstSort);
   else if(dmFilters.sort==='elb')list=list.slice().sort((a,b)=>{const ea=elb&&elb.byStore[a.store],eb2=elb&&elb.byStore[b.store];return(ea?ea.rank:99999)-(eb2?eb2.rank:99999)});
   else if(dmFilters.sort==='dealer')list=list.slice().sort((a,b)=>a.dealer.localeCompare(b.dealer)||a.pace[0]-b.pace[0]);
   else if(dmFilters.sort==='market')list=list.slice().sort((a,b)=>a.market.localeCompare(b.market)||a.pace[0]-b.pace[0]);
@@ -755,7 +757,7 @@ function screenDM(){
     const ea=elbAgg(d.stores);
     const today=d.stores.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
     return{...d,pace:p,crit,elb:ea,today};
-  }).sort((a,b)=>a.pace-b.pace);
+  }).sort((a,b)=>(b.elb?b.elb.avg:0)-(a.elb?a.elb.avg:0)||a.pace-b.pace);
 
   const mktOpts=markets.map(m=>`<option value="${esc(m)}"${dmFilters.market===m?'selected':''}>${esc(MKT_ABBR[m]||m)}</option>`).join('');
   const dlrOpts=dealers.map(d=>`<option value="${esc(d)}"${dmFilters.dealer===d?'selected':''}>${esc(d)}</option>`).join('');
@@ -784,11 +786,11 @@ function screenDM(){
   h+=summaryCards(list);
 
   // who to call right now
-  const callList=dealerRollup.filter(d=>d.crit>0||d.pace<80).slice(0,6);
+  const callList=dealerRollup.filter(d=>d.elb?d.elb.avg>1100:d.pace<80).slice(0,6);
   if(callList.length){
     h+=`<div class="panel" style="border-left:3px solid var(--red)"><h3 style="color:var(--red)">📞 Who to call right now · sorted by urgency</h3>`;
     callList.forEach(d=>{
-      const worst=d.stores.slice().sort((a,b)=>a.pace[0]-b.pace[0])[0];
+      const worst=d.stores.slice().sort(elbWorstSort)[0];
       let why='';
       if(d.crit>0)why=`${d.crit} store${d.crit>1?'s':''} below 70% pace`;
       else why=`${d.pace.toFixed(0)}% avg on target — needs push`;

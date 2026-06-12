@@ -625,7 +625,7 @@ function screenDash(){
   const list=storesOf();
   const sorted=list.slice().sort(elbWorstSort);
   const se=seriesFor(list,0);
-  let h=`<div class="screen">${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}
+  let h=`<div class="screen">${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}${todayTable(list,'dash')}
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,130)}
       <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
       <span>MTD <b style="color:var(--text)">${se.mtd.toLocaleString()}</b></span>
@@ -754,6 +754,37 @@ function screenLinks(){
   return h+'</div>';
 }
 
+/* ---------- Today's performance table ---------- */
+function todayTable(list,prevScreen){
+  const sorted=list.slice().sort((a,b)=>b.today.reduce((s,v)=>s+v,0)-a.today.reduce((s,v)=>s+v,0));
+  const colHeaders=['New All','Voice','HINT','BTS','Mag'];
+  let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:380px">
+    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:5px 6px">Store</th>`;
+  colHeaders.forEach(n=>h+=`<th style="text-align:center;padding:5px 5px">${n}</th>`);
+  h+=`<th style="text-align:center;padding:5px 6px">Total</th></tr></thead><tbody>`;
+  sorted.forEach(s=>{
+    const total=s.today.reduce((sum,v)=>sum+v,0);
+    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
+      <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
+    s.today.forEach(v=>{
+      const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
+      h+=`<td style="text-align:center;padding:5px 5px;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
+    });
+    const tc=total>0?'var(--green)':'var(--red)';
+    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${total>0?'+'+total:'—'}</td></tr>`;
+  });
+  // totals row
+  const tots=NAMES.map((_,i)=>list.reduce((s,st)=>s+st.today[i],0));
+  const grand=tots.reduce((s,v)=>s+v,0);
+  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
+  tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
+  h+=`<td style="text-align:center;padding:5px 6px;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td></tr>`;
+  return h+'</tbody></table></div></div>';
+}
+
 /* ---------- Director Mode (DM) ---------- */
 let dmFilters={market:'',dealer:'',sort:'urgency',q:''};
 function screenDM(){
@@ -860,6 +891,9 @@ function screenDM(){
   } else {
     h+=`<button style="font-size:.74rem;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;margin-bottom:12px" onclick="dmFilters.dealer='';renderApp()">✕ Clear filter: ${esc(dmFilters.dealer)}</button>`;
   }
+
+  // today's table
+  h+=todayTable(list,'dm');
 
   // ELB leaderboard
   h+=elbLeaderboard(list);

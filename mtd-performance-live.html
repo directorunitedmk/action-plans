@@ -6,68 +6,89 @@
 <title>Month-To-Date Performance — Live</title>
 <style>
   :root{--bg:#f4f6fa;--card:#ffffff;--text:#1c2433;--muted:#64748b;--border:#e2e8f0;--track:#eef1f6;
-    --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb}
+    --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb;
+    --redbg:#fdf0f0;--amberbg:#fdf6ea;--greenbg:#f0f9f2}
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
-  body{background:var(--bg);color:var(--text);min-height:100vh;padding:32px 20px}
-  .wrap{max-width:1320px;margin:0 auto}
-  header{text-align:center;margin-bottom:24px}
-  header h1{font-size:1.9rem;font-weight:700;letter-spacing:.3px}
-  header p{color:var(--muted);margin-top:6px;font-size:.95rem}
-  .live-line{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:8px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px}
+  .wrap{max-width:1500px;margin:0 auto}
+  header{text-align:center;margin-bottom:18px}
+  header h1{font-size:1.7rem;font-weight:700;letter-spacing:.3px}
+  header p{color:var(--muted);margin-top:5px;font-size:.9rem}
+  .live-line{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:7px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
   .pulse{width:9px;height:9px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  .refresh-btn{background:var(--card);border:1px solid var(--border);color:var(--blue);font-size:.78rem;padding:4px 12px;border-radius:16px;cursor:pointer}
-  .refresh-btn:hover{border-color:var(--blue)}
-  .legend{display:flex;gap:18px;justify-content:center;margin-top:12px;font-size:.8rem;color:var(--muted);flex-wrap:wrap}
+  .refresh-btn,.view-btn{background:var(--card);border:1px solid var(--border);color:var(--blue);font-size:.78rem;padding:4px 12px;border-radius:16px;cursor:pointer}
+  .refresh-btn:hover,.view-btn:hover{border-color:var(--blue)}
+  .view-btn.active{background:rgba(37,99,235,.1);border-color:var(--blue);font-weight:600}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
   .legend span{display:flex;align-items:center;gap:6px}
   .dot{width:10px;height:10px;border-radius:50%}
-  .banner{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:.85rem;text-align:center}
-  .filters{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:22px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
-  .filter-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .banner{display:none;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:.85rem;text-align:center}
+  .filters{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .filter-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
   .filter-row:last-child{margin-bottom:0}
-  .filter-label{font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);min-width:90px}
-  .chip{background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:.8rem;padding:6px 13px;border-radius:20px;cursor:pointer;transition:all .15s}
+  .filter-label{font-size:.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);min-width:84px}
+  .chip{background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:.78rem;padding:5px 12px;border-radius:18px;cursor:pointer;transition:all .15s}
   .chip:hover{color:var(--text);border-color:var(--blue)}
   .chip.active{background:rgba(37,99,235,.1);border-color:var(--blue);color:var(--blue);font-weight:600}
   .chip.dim{opacity:.4}
-  .count-line{font-size:.78rem;color:var(--muted);margin-top:10px}
-  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:28px}
-  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .count-line{font-size:.75rem;color:var(--muted);margin-top:8px}
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+  .sum-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
   .today-card{border-left:4px solid var(--blue)}
-  .sum-label{font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-  .sum-val{font-size:1.6rem;font-weight:700;margin:4px 0 2px}
-  .sum-sub{font-size:.78rem;color:var(--muted);margin-bottom:8px;line-height:1.4}
-  .dist-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:1.15rem;margin:30px 0 16px;border-bottom:2px solid var(--border);padding-bottom:8px}
-  .dist-stat{font-size:.85rem;font-weight:600}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:20px}
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 1px 3px rgba(16,24,40,.06);transition:transform .15s,box-shadow .15s}
-  .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,24,40,.12)}
+  .sum-label{font-size:.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .sum-val{font-size:1.35rem;font-weight:700;margin:2px 0 1px}
+  .sum-sub{font-size:.72rem;color:var(--muted);margin-bottom:6px;line-height:1.35}
+  .bar{height:7px;background:var(--track);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;transition:width .6s ease}
+  /* ===== table view ===== */
+  .tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.06);overflow:auto;max-height:calc(100vh - 110px)}
+  table.compact{width:100%;border-collapse:collapse;font-size:.8rem;min-width:1100px}
+  .compact thead th{position:sticky;top:0;background:var(--card);z-index:2;border-bottom:2px solid var(--border);padding:8px 6px;font-size:.66rem;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);text-align:center;white-space:nowrap}
+  .compact thead th.sortable{cursor:pointer}
+  .compact thead th.sortable:hover{color:var(--blue)}
+  .compact thead th.sorted{color:var(--blue)}
+  .compact tbody td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;white-space:nowrap}
+  .compact tbody tr:hover{background:#f8fafc}
+  .compact td.store{text-align:left;font-weight:700;font-size:.82rem}
+  .compact td.who{text-align:left;color:var(--muted);font-size:.72rem;line-height:1.3;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+  .mcell{display:flex;flex-direction:column;align-items:center;line-height:1.25}
+  .mcell .top{font-weight:600}
+  .mcell .top .of{color:var(--muted);font-weight:400}
+  .mcell .bot{font-size:.72rem;font-weight:700}
+  td.c-green{background:var(--greenbg)} td.c-amber{background:var(--amberbg)} td.c-red{background:var(--redbg)}
+  .tdy{font-weight:700;color:var(--blue)}
+  .statdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+  .totrow td{font-weight:700;background:#f1f5fb;border-top:2px solid var(--border);position:sticky;bottom:0}
+  /* ===== card view ===== */
+  .dist-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;font-size:1.1rem;margin:26px 0 14px;border-bottom:2px solid var(--border);padding-bottom:7px}
+  .dist-stat{font-size:.83rem;font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
   .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-  .card h2{font-size:1.15rem}
-  .badge{font-size:.66rem;font-weight:700;letter-spacing:.8px;padding:4px 10px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
+  .card h2{font-size:1.1rem}
+  .badge{font-size:.64rem;font-weight:700;letter-spacing:.8px;padding:4px 10px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
   .badge.critical{background:rgba(220,38,38,.1);color:var(--red);border:1px solid rgba(220,38,38,.35)}
   .badge.high{background:rgba(217,119,6,.1);color:var(--amber);border:1px solid rgba(217,119,6,.35)}
   .badge.on-pace{background:rgba(22,163,74,.1);color:var(--green);border:1px solid rgba(22,163,74,.35)}
-  .focus-line{color:var(--muted);font-size:.82rem;margin-bottom:14px}
-  .mtable{width:100%;border-collapse:collapse;font-size:.84rem}
-  .mtable th{font-size:.64rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 6px 6px;font-weight:600;cursor:default}
+  .focus-line{color:var(--muted);font-size:.8rem;margin-bottom:12px}
+  .mtable{width:100%;border-collapse:collapse;font-size:.82rem}
+  .mtable th{font-size:.62rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);text-align:right;padding:0 6px 6px;font-weight:600}
   .mtable th:first-child{text-align:left;padding-left:0}
-  .mtable td{padding:5px 6px;text-align:right;vertical-align:middle}
+  .mtable td{padding:4px 6px;text-align:right;vertical-align:middle}
   .mname{text-align:left!important;padding-left:0!important;font-weight:600}
-  .mtoday{color:var(--blue);font-weight:600;width:44px}
+  .mtoday{color:var(--blue);font-weight:600;width:42px}
   .mnum{white-space:nowrap;font-weight:600}
   .of{color:var(--muted);font-weight:400}
-  .mvar{font-weight:700;width:48px}
-  .mrem{color:var(--muted);width:46px}
-  .mbar{width:24%}
-  .mpct{font-weight:700;width:52px}
-  .bar{height:8px;background:var(--track);border-radius:6px;overflow:hidden}
-  .fill{height:100%;border-radius:6px;transition:width .6s ease}
-  .statgrid{margin-top:12px;border-top:1px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:5px}
-  .statrow{display:flex;gap:8px;align-items:baseline;font-size:.8rem}
-  .statrow span{color:var(--muted);min-width:128px}
-  .statrow em{color:var(--muted);font-style:normal;font-size:.75rem}
-  footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:36px}
+  .mvar{font-weight:700;width:46px}
+  .mrem{color:var(--muted);width:44px}
+  .mbar{width:23%}
+  .mpct{font-weight:700;width:50px}
+  .statgrid{margin-top:10px;border-top:1px solid var(--border);padding-top:9px;display:flex;flex-direction:column;gap:4px}
+  .statrow{display:flex;gap:8px;align-items:baseline;font-size:.78rem}
+  .statrow span{color:var(--muted);min-width:124px}
+  .statrow em{color:var(--muted);font-style:normal;font-size:.73rem}
+  footer{text-align:center;color:var(--muted);font-size:.76rem;margin-top:28px}
   #loading{text-align:center;color:var(--muted);padding:60px 0;font-size:.95rem}
   @media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
@@ -81,12 +102,14 @@
       <span class="pulse"></span>
       <span id="updatedLine">Connecting to Google Sheet…</span>
       <button class="refresh-btn" onclick="loadData(true)">↻ Refresh now</button>
+      <button class="view-btn" id="btnTable" onclick="setView('table')">☰ Table</button>
+      <button class="view-btn" id="btnCards" onclick="setView('cards')">▦ Cards</button>
     </div>
     <div class="legend">
       <span><span class="dot" style="background:var(--green)"></span>On pace (≥100%)</span>
       <span><span class="dot" style="background:var(--amber)"></span>Needs push (70–99%)</span>
       <span><span class="dot" style="background:var(--red)"></span>Critical (&lt;70%)</span>
-      <span>Δ Pace = MTD performance vs. MTD goal · To Go = remaining to full-month goal</span>
+      <span>Δ = MTD performance vs. MTD goal · To Go = remaining to full-month goal · click a metric header to sort</span>
     </div>
   </header>
 
@@ -99,7 +122,7 @@
   </div>
 
   <div class="summary" id="summary"></div>
-  <div id="sections"></div>
+  <div id="content"></div>
   <div id="loading">Loading live data from Google Sheet…</div>
   <footer id="foot"></footer>
 </div>
@@ -112,8 +135,11 @@ const URLS=[
 const REFRESH_MS=10*60*1000;
 const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
 const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid'};
+const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
 let model=null;
 const state={market:localStorage.getItem('f_market')||'__all__',dealer:localStorage.getItem('f_dealer')||'__all__'};
+let view=localStorage.getItem('view')||'table';
+let sortIdx=parseInt(localStorage.getItem('sortIdx')||'0',10);
 
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -152,11 +178,13 @@ function buildModel(rows){
   return {meta,stores};
 }
 const colorFor=p=>p>=100?'var(--green)':p>=70?'var(--amber)':'var(--red)';
+const cellCls=p=>p>=100?'c-green':p>=70?'c-amber':'c-red';
 const badgeFor=p=>p>=100?['on-pace','On Pace']:p>=70?['high','Needs Push']:['critical','Critical'];
 const sign=n=>n>0?'+'+n:''+n;
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const title=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
 
+function setView(v){view=v;localStorage.setItem('view',v);render()}
 function chipHTML(filter,vals){
   let h=`<button class="chip" data-filter="${filter}" data-val="__all__">All</button>`;
   vals.forEach(v=>h+=`<button class="chip" data-filter="${filter}" data-val="${esc(v)}">${esc(v)}</button>`);
@@ -164,7 +192,42 @@ function chipHTML(filter,vals){
 }
 function matches(s){return (state.market==='__all__'||s.market===state.market)&&(state.dealer==='__all__'||s.dealer===state.dealer)}
 
-function cardHTML(s,paceFrac){
+function tableHTML(vis,pf){
+  const sorted=vis.slice().sort((a,b)=>a.pace[sortIdx]-b.pace[sortIdx]);
+  let mheads='';
+  NAMES.forEach((n,i)=>{mheads+=`<th class="sortable ${i===sortIdx?'sorted':''}" onclick="setSort(${i})">${n} ${i===sortIdx?'▲':''}</th>`});
+  let rows='';
+  sorted.forEach(s=>{
+    let mcells='';
+    NAMES.forEach((n,i)=>{
+      const p=s.pace[i],v=s.vari[i];
+      mcells+=`<td class="${cellCls(p)}"><div class="mcell">
+        <span class="top">${s.mtd[i]}<span class="of">/${s.goal[i]}</span>${s.today[i]?` <span class="tdy">${sign(s.today[i])}</span>`:''}</span>
+        <span class="bot" style="color:${colorFor(p)}">${p.toFixed(0)}% · ${sign(v)}</span></div></td>`;
+    });
+    rows+=`<tr>
+      <td class="store"><span class="statdot" style="background:${colorFor(s.pace[0])}"></span>${esc(title(s.store))}</td>
+      <td class="who">${esc(s.dealer)}<br>${esc(MKT_ABBR[s.market]||s.market)} · ${esc(s.rdm)}</td>
+      ${mcells}
+      <td>${esc(s.convM)}<br><span style="color:var(--muted);font-size:.7rem">${esc(s.qpayM)} QPAY</span></td>
+      <td>${esc(s.featM)}</td>
+    </tr>`;
+  });
+  // totals row
+  let tcells='';
+  NAMES.forEach((n,i)=>{
+    let m=0,g=0,t=0;vis.forEach(s=>{m+=s.mtd[i];g+=s.goal[i];t+=s.today[i]});
+    const p=g?m/(g*pf)*100:0;
+    tcells+=`<td class="${cellCls(p)}"><div class="mcell"><span class="top">${m.toLocaleString()}<span class="of">/${g.toLocaleString()}</span>${t?` <span class="tdy">${sign(t)}</span>`:''}</span><span class="bot" style="color:${colorFor(p)}">${p.toFixed(0)}%</span></div></td>`;
+  });
+  return `<div class="tbl-wrap"><table class="compact">
+    <thead><tr><th style="text-align:left">Store</th><th style="text-align:left">Sub-Dealer / Mkt / RDM</th>${mheads}<th>Conv MTD</th><th>Feat $/Box</th></tr></thead>
+    <tbody>${rows}<tr class="totrow"><td class="store">TOTAL</td><td class="who">${vis.length} stores</td>${tcells}<td></td><td></td></tr></tbody>
+  </table></div>`;
+}
+function setSort(i){sortIdx=i;localStorage.setItem('sortIdx',i);render()}
+
+function cardHTML(s){
   const [cls,lbl]=badgeFor(s.pace[0]);
   let rows='';
   NAMES.forEach((n,i)=>{
@@ -182,7 +245,7 @@ function cardHTML(s,paceFrac){
   return `<div class="card">
     <div class="card-head"><h2>📍 ${esc(title(s.store))}</h2><span class="badge ${cls}">${lbl}</span></div>
     <p class="focus-line">RDM: <strong>${esc(s.rdm)}</strong> · Sub-Dealer: <strong>${esc(s.dealer)}</strong></p>
-    <table class="mtable"><thead><tr><th></th><th title="Movement today">Today</th><th title="Performance MTD vs full-month goal">MTD/Goal</th><th title="Goal MTD vs Performance MTD">Δ Pace</th><th title="Remaining to full-month goal">To Go</th><th></th><th title="On-target % MTD">On-Tgt</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="mtable"><thead><tr><th></th><th>Today</th><th>MTD/Goal</th><th>Δ Pace</th><th>To Go</th><th></th><th>On-Tgt</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="statgrid">
       <div class="statrow"><span>Conversion MTD</span><strong>${esc(s.convM)}</strong><em>${esc(s.qpayM)} QPAY</em></div>
       <div class="statrow"><span>Conversion Today</span><strong>${esc(s.convT)}</strong><em>${esc(s.qpayT)} QPAY</em></div>
@@ -190,13 +253,30 @@ function cardHTML(s,paceFrac){
       ${s.topFeat?`<div class="statrow"><span>Top Feature</span><strong>${esc(s.topFeat)}</strong></div>`:''}
     </div></div>`;
 }
+function cardsHTML(vis,pf){
+  const byDist={};
+  vis.forEach(s=>{(byDist[s.market]=byDist[s.market]||[]).push(s)});
+  const order=Object.keys(byDist).sort((a,b)=>{
+    const avg=d=>byDist[d].reduce((t,s)=>t+s.pace[0],0)/byDist[d].length;
+    return avg(a)-avg(b);
+  });
+  let h='';
+  order.forEach(d=>{
+    const ds=byDist[d].slice().sort((a,b)=>a.pace[0]-b.pace[0]);
+    let m=0,g=0;ds.forEach(s=>{m+=s.mtd[0];g+=s.goal[0]});
+    const p=m/(g*pf)*100;
+    h+=`<div class="district"><h2 class="dist-head"><span>${esc(d)}</span><span class="dist-stat" style="color:${colorFor(p)}">${p.toFixed(0)}% on-target · ${m}/${g} New All</span></h2><div class="grid">${ds.map(cardHTML).join('')}</div></div>`;
+  });
+  return h;
+}
 
 function render(){
   if(!model)return;
   const {meta,stores}=model,pf=meta.paceFrac;
   document.getElementById('metaLine').innerHTML=
     `Movement today as of <strong>${esc(meta.asOf||meta.reportDate)}</strong> · ${(pf*100).toFixed(0)}% through month (${esc(meta.daysLeft)} days remaining) · On-target % = performance vs. MTD pace goal`;
-  // chips (rebuild, keep selection)
+  document.getElementById('btnTable').classList.toggle('active',view==='table');
+  document.getElementById('btnCards').classList.toggle('active',view==='cards');
   const markets=[...new Set(stores.map(s=>s.market))].sort();
   const dealers=[...new Set(stores.map(s=>s.dealer))].sort();
   if(state.market!=='__all__'&&!markets.includes(state.market))state.market='__all__';
@@ -221,7 +301,6 @@ function render(){
   const vis=stores.filter(matches);
   // summary
   const tdy=[0,0,0,0,0];let sumHTML='';
-  let cardsHTML='';
   for(let i=0;i<5;i++){
     let m=0,g=0;vis.forEach(s=>{m+=s.mtd[i];g+=s.goal[i];tdy[i]+=s.today[i]});
     const p=g?m/(g*pf)*100:0,col=colorFor(p);
@@ -230,24 +309,10 @@ function render(){
   const tot=tdy.reduce((a,b)=>a+b,0);
   document.getElementById('summary').innerHTML=
     `<div class="sum-card today-card"><div class="sum-label">Movement Today</div><div class="sum-val">+${tot}</div><div class="sum-sub">${tdy.map((v,i)=>NAMES[i]+' +'+v).join(' · ')}</div></div>`+sumHTML;
-  // districts
-  const byDist={};
-  vis.forEach(s=>{(byDist[s.market]=byDist[s.market]||[]).push(s)});
-  const order=Object.keys(byDist).sort((a,b)=>{
-    const avg=d=>byDist[d].reduce((t,s)=>t+s.pace[0],0)/byDist[d].length;
-    return avg(a)-avg(b);
-  });
-  let secHTML='';
-  order.forEach(d=>{
-    const ds=byDist[d].slice().sort((a,b)=>a.pace[0]-b.pace[0]);
-    let m=0,g=0;ds.forEach(s=>{m+=s.mtd[0];g+=s.goal[0]});
-    const p=m/(g*pf)*100;
-    secHTML+=`<div class="district"><h2 class="dist-head"><span>${esc(d)}</span><span class="dist-stat" style="color:${colorFor(p)}">${p.toFixed(0)}% on-target · ${m}/${g} New All</span></h2><div class="grid">${ds.map(s=>cardHTML(s,pf)).join('')}</div></div>`;
-  });
-  document.getElementById('sections').innerHTML=secHTML;
+  document.getElementById('content').innerHTML=view==='table'?tableHTML(vis,pf):cardsHTML(vis,pf);
   document.getElementById('countLine').textContent=`Showing ${vis.length} of ${stores.length} stores`;
   document.getElementById('loading').style.display='none';
-  document.getElementById('foot').textContent=`Source: Month-To-Date Perf (Google Sheet) · Stores sorted worst-first by New All on-target % · Auto-refreshes every 10 minutes`;
+  document.getElementById('foot').textContent=`Source: Month-To-Date Perf (Google Sheet) · Sorted worst-first · Auto-refreshes every 10 minutes`;
 }
 
 async function loadData(manual){

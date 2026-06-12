@@ -97,6 +97,12 @@
   .chart-holder{position:relative;height:420px}
   .trend-stats{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:10px;font-size:.8rem;color:var(--muted)}
   .trend-stats strong{color:var(--text)}
+  .mini-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .mini{border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+  .mini-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:.85rem;margin-bottom:4px}
+  .mini-name{font-weight:700}
+  .mini-stat{color:var(--muted);font-size:.8rem;white-space:nowrap}
+  .mini-sub{font-size:.72rem;color:var(--muted);margin-top:4px}
   @media(max-width:480px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -150,6 +156,7 @@ const state={market:localStorage.getItem('f_market')||'__all__',dealer:localStor
 let view=localStorage.getItem('view')||'table';
 let sortIdx=parseInt(localStorage.getItem('sortIdx')||'0',10);
 let trendIdx=parseInt(localStorage.getItem('trendIdx')||'0',10);
+let trendMode=localStorage.getItem('trendMode')||'combined';
 
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -262,39 +269,36 @@ function trendHTML(){
     const dis=DAILY_COL[i]===undefined;
     chips+=`<button class="chip ${i===trendIdx?'active':''} ${dis?'dim':''}" ${dis?'disabled title="Not in Daily Perf Data tab"':''} onclick="setTrendIdx(${i})">${n}</button>`;
   });
+  const modes=`<button class="chip ${trendMode==='combined'?'active':''}" onclick="setTrendMode('combined')">Combined</button>
+    <button class="chip ${trendMode==='stores'?'active':''}" onclick="setTrendMode('stores')">By Store</button>`;
   return `<div class="trend-box">
-    <div class="trend-head"><span>${chips}</span><span class="trend-note" id="trendNote"></span></div>
-    <div class="chart-holder" id="chartHolder"></div>
+    <div class="trend-head"><span>${chips} &nbsp;|&nbsp; ${modes}</span><span class="trend-note" id="trendNote"></span></div>
+    <div id="chartArea"></div>
     <div class="trend-stats" id="trendStats"></div>
   </div>`;
 }
+function setTrendMode(v){trendMode=v;localStorage.setItem('trendMode',v);render()}
 
-function drawTrend(vis,pf){
-  if(DAILY_COL[trendIdx]===undefined)trendIdx=0;
-  const m=trendIdx;
+// build chart series for any subset of stores
+function seriesFor(subset,m,includeUnmapped){
   const meta=model.meta;
   const start=parseMDY(meta.reportDate);start.setDate(1);
-  const eom=parseMDY(meta.eom);
-  const nDays=eom.getDate();
+  const nDays=parseMDY(meta.eom).getDate();
   const labels=[];for(let d=1;d<=nDays;d++)labels.push(fmtMD(new Date(start.getFullYear(),start.getMonth(),d)));
-  const goalTotal=vis.reduce((t,s)=>t+s.goal[m],0);
-  const mtd=vis.reduce((t,s)=>t+s.mtd[m],0);
+  const goalTotal=subset.reduce((t,s)=>t+s.goal[m],0);
+  const mtd=subset.reduce((t,s)=>t+s.mtd[m],0);
   const goalLine=labels.map((_,i)=>+(goalTotal*(i+1)/nDays).toFixed(1));
-  // filter daily records
-  const noFilter=state.market==='__all__'&&state.dealer==='__all__';
-  const keys=new Set(vis.map(s=>s.idKey));
+  const keys=new Set(subset.map(s=>s.idKey));
   const dayMap={};
   (daily||[]).forEach(r=>{
-    const inSet=r.key?keys.has(r.key):noFilter;
+    const inSet=r.key?keys.has(r.key):includeUnmapped;
     if(!inSet)return;
     dayMap[r.date]=(dayMap[r.date]||0)+r.vals[m];
   });
   const idxOf=dt=>Math.round((parseMDY(dt)-start)/864e5);
-  // keep only days inside the current month (sheet may include prior-month rows)
   const dates=Object.keys(dayMap).filter(d=>{const i=idxOf(d);return i>=0&&i<nDays}).sort((a,b)=>parseMDY(a)-parseMDY(b));
   const dailyData=labels.map(()=>null);
   dates.forEach(dt=>{dailyData[idxOf(dt)]=dayMap[dt]});
-  // cumulative actual: anchor so the last daily date equals current MTD
   const cum=labels.map(()=>null);
   if(dates.length){
     const winSum=dates.reduce((t,d)=>t+dayMap[d],0);
@@ -304,7 +308,60 @@ function drawTrend(vis,pf){
     dates.forEach(dt=>{run+=dayMap[dt];cum[idxOf(dt)]=run});
   }
   const todayIdx=parseMDY(meta.reportDate).getDate()-1;
-  const paceTarget=goalLine[todayIdx];
+  return {labels,nDays,goalTotal,mtd,goalLine,cum,dailyData,dates,todayIdx,paceTarget:goalLine[todayIdx]};
+}
+
+function miniSVG(se){
+  const W=320,H=130,L=10,R=10,T=10,B=10;
+  const pw=W-L-R,ph=H-T-B;
+  const yMax=Math.max(se.goalTotal,...se.cum.filter(v=>v!=null),1)*1.08;
+  const X=i=>L+pw*(i+.5)/se.nDays;
+  const Y=v=>T+ph*(1-v/yMax);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:130px" xmlns="http://www.w3.org/2000/svg">`;
+  svg+=`<line x1="${X(se.todayIdx)}" y1="${T}" x2="${X(se.todayIdx)}" y2="${T+ph}" stroke="#d97706" stroke-width="1" stroke-dasharray="3 3"/>`;
+  svg+=`<polyline fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="5 4" points="${se.labels.map((_,i)=>X(i)+','+Y(se.goalLine[i])).join(' ')}"/>`;
+  const pts=[];se.cum.forEach((v,i)=>{if(v!=null)pts.push([X(i),Y(v),v,se.labels[i]])});
+  if(pts.length){
+    const onPace=se.mtd>=se.paceTarget;
+    const col=onPace?'#16a34a':'#dc2626';
+    svg+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+    pts.forEach(p=>{svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="${col}"><title>${p[3]}: ${p[2]} cumulative</title></circle>`});
+  }
+  return svg+'</svg>';
+}
+
+function drawTrend(vis,pf){
+  if(DAILY_COL[trendIdx]===undefined)trendIdx=0;
+  const m=trendIdx;
+  const meta=model.meta;
+  const area=document.getElementById('chartArea');
+  const agg=seriesFor(vis,m,state.market==='__all__'&&state.dealer==='__all__');
+  document.getElementById('trendNote').textContent=`Daily history available from ${agg.dates[0]||'n/a'} (extends automatically as days accumulate)`;
+  const gap=agg.mtd-agg.paceTarget;
+  document.getElementById('trendStats').innerHTML=
+    `<span>MTD: <strong>${agg.mtd.toLocaleString()}</strong></span>
+     <span>Pace target today: <strong>${Math.round(agg.paceTarget).toLocaleString()}</strong></span>
+     <span>Gap vs pace: <strong style="color:${gap>=0?'var(--green)':'var(--red)'}">${gap>=0?'+':''}${Math.round(gap).toLocaleString()}</strong></span>
+     <span>Month goal: <strong>${agg.goalTotal.toLocaleString()}</strong></span>
+     <span>To go: <strong>${(agg.goalTotal-agg.mtd).toLocaleString()}</strong> in ${meta.daysLeft} days (${Math.ceil((agg.goalTotal-agg.mtd)/Math.max(+meta.daysLeft,1)).toLocaleString()}/day)</span>`;
+  if(trendMode==='stores'){
+    const sorted=vis.slice().sort((a,b)=>a.pace[m]-b.pace[m]);
+    let h='<div class="mini-grid">';
+    sorted.forEach(s=>{
+      const se=seriesFor([s],m,false);
+      const p=s.pace[m],col=colorFor(p);
+      h+=`<div class="mini">
+        <div class="mini-head"><span class="mini-name"><span class="statdot" style="background:${col}"></span>${esc(title(s.store))}</span>
+        <span class="mini-stat">${s.mtd[m]}<span class="of">/${s.goal[m]}</span> · <strong style="color:${col}">${p.toFixed(0)}%</strong></span></div>
+        ${miniSVG(se)}
+        <div class="mini-sub">${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · ${Math.round(se.paceTarget)} pace target · ${se.mtd-Math.round(se.paceTarget)>=0?'+':''}${se.mtd-Math.round(se.paceTarget)} vs pace</div>
+      </div>`;
+    });
+    area.innerHTML=h+'</div>';
+    return;
+  }
+  area.innerHTML='<div class="chart-holder" id="chartHolder"></div>';
+  const {labels,nDays,goalTotal,mtd,goalLine,cum,dailyData,todayIdx,paceTarget}=agg;
   // ===== self-contained SVG chart =====
   const W=1000,H=420,L=64,R=56,T=18,B=46;
   const pw=W-L-R,ph=H-T-B;
@@ -356,14 +413,6 @@ function drawTrend(vis,pf){
   </g>`;
   svg+='</svg>';
   document.getElementById('chartHolder').innerHTML=svg;
-  const gap=mtd-paceTarget;
-  document.getElementById('trendNote').textContent=`Daily history available from ${dates[0]||'n/a'} (sheet keeps recent days; the line extends automatically as days accumulate)`;
-  document.getElementById('trendStats').innerHTML=
-    `<span>MTD: <strong>${mtd.toLocaleString()}</strong></span>
-     <span>Pace target today: <strong>${Math.round(paceTarget).toLocaleString()}</strong></span>
-     <span>Gap vs pace: <strong style="color:${gap>=0?'var(--green)':'var(--red)'}">${gap>=0?'+':''}${Math.round(gap).toLocaleString()}</strong></span>
-     <span>Month goal: <strong>${goalTotal.toLocaleString()}</strong></span>
-     <span>To go: <strong>${(goalTotal-mtd).toLocaleString()}</strong> in ${meta.daysLeft} days (${Math.ceil((goalTotal-mtd)/Math.max(+meta.daysLeft,1)).toLocaleString()}/day)</span>`;
 }
 
 function cardHTML(s){

@@ -18,7 +18,7 @@
   .appbar .sub{font-size:.72rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .screen{flex:1;padding:18px 16px 30px;animation:slidein .22s ease}
   @keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
-  .livebar{display:flex;align-items:center;gap:7px;justify-content:center;font-size:.72rem;color:var(--muted);padding:8px 0 0}
+  .livebar{display:flex;align-items:center;gap:7px;justify-content:center;font-size:.72rem;color:var(--muted);padding:0 0 8px}
   .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .hero{text-align:center;padding:40px 10px 26px}
@@ -401,7 +401,7 @@ function briefHTML(list){
   const items=briefFor(list);
   if(!items.length)return '';
   const hr=Math.floor(hoursOpen());
-  let h=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open (10am)':'pre-open'} · updates every 10 min</span></div>`;
+  let h=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock openClock"></span></div>`;
   items.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it — hide for now">✕</button></div>`});
   return h+'</div>';
 }
@@ -625,7 +625,7 @@ function screenDash(){
   const list=storesOf();
   const sorted=list.slice().sort(elbWorstSort);
   const se=seriesFor(list,0);
-  let h=`<div class="screen">${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}${todayTable(list,'dash')}
+  let h=`<div class="screen">${liveBar()}${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}${todayTable(list,'dash')}
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,130)}
       <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
       <span>MTD <b style="color:var(--text)">${se.mtd.toLocaleString()}</b></span>
@@ -633,7 +633,7 @@ function screenDash(){
       <span style="color:${se.mtd>=se.paceTarget?'var(--green)':'var(--red)'}">${sign(Math.round(se.mtd-se.paceTarget))} vs pace</span></div></div>
     <div class="list-title">Stores · worst first</div>`;
   sorted.forEach(s=>h+=storeRow(s));
-  return h+liveBar()+'</div>';
+  return h+'</div>';
 }
 function screenStores(){
   const sorted=storesOf().slice().sort((a,b)=>a.store.localeCompare(b.store));
@@ -709,6 +709,7 @@ function screenDetail(){
       <span class="d">ELB national rank ${moveHTML(d)} · ${esc(e.quintile)} · score ${esc(e.score)}</span></div>`;
   }
   return `<div class="screen">
+    ${liveBar()}
     ${briefHTML([s])}
     <div class="det-head">
       <div class="row1"><h2>📍 ${esc(title(s.store))}</h2><span class="badge ${cls}">${lbl}</span></div>
@@ -726,12 +727,26 @@ function screenDetail(){
       <div class="statline"><span>Feature revenue</span><b>${esc(feat)}</b></div>
       ${s.topFeat?`<div class="statline"><span>Top feature</span><b>${esc(s.topFeat)}</b></div>`:''}
     </div>
-    ${liveBar()}
+    ${todayTable([s],'detail')}
   </div>`;
 }
 const fmtAsOf=s=>{if(!s)return'';const m=s.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);if(!m)return s;let h=+m[4],mi=m[5],ap=h>=12?'pm':'am';h=h%12||12;return`${m[1]}/${m[2]}/${m[3]} ${h}:${mi}${ap}`};
 function liveBar(){
   return `<div class="livebar"><span class="pulse"></span><span>Live · sheet as of ${fmtAsOf(model?model.meta.asOf:'')} · refreshes every 10 min</span></div>`;
+}
+function fmtOpenClock(){
+  const now=new Date(),open=new Date(now.getFullYear(),now.getMonth(),now.getDate(),OPEN_HOUR);
+  const secs=Math.floor(Math.max(0,(now-open)/1000));
+  if(secs<=0)return'pre-open';
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+  return`· ${h>0?h+'h ':''} ${m}m ${String(s).padStart(2,'0')}s since open (10am)`;
+}
+let openClockInterval=null;
+function startOpenClock(){
+  if(openClockInterval)clearInterval(openClockInterval);
+  const tick=()=>{document.querySelectorAll('.openClock').forEach(el=>el.textContent=fmtOpenClock());};
+  tick();
+  openClockInterval=setInterval(tick,1000);
 }
 function screenLinks(){
   const base=window.location.origin+window.location.pathname;
@@ -866,8 +881,8 @@ function screenDM(){
   // attack board across visible stores (top items only)
   const allBrief=briefFor(list).slice(0,8);
   if(allBrief.length){
-    const hr=Math.floor(hoursOpen());
-    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock">· ${hr>0?hr+'h since open (10am)':'pre-open'} · updates every 10 min</span></div>`;
+    h+=liveBar();
+    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock openClock"></span></div>`;
     allBrief.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it">✕</button></div>`});
     h+='</div>';
   }
@@ -916,7 +931,7 @@ function screenDM(){
       <span class="right">${right}</span></button>`;
   });
 
-  return h+liveBar()+'</div>';
+  return h+'</div>';
 }
 
 function renderApp(){
@@ -944,6 +959,7 @@ function renderApp(){
   document.getElementById('foot').textContent='Tomorrow Telecom · Performance Dashboard · % of Days Passed: '+(model.meta.paceFrac*100).toFixed(2)+'%';
   attachBriefHandlers();
   updateBackBtn();
+  startOpenClock();
   if(confettiPending){confettiPending=false;fireConfetti()}
 }
 document.getElementById('btnBack').addEventListener('click',()=>{const t=backTarget();if(t)go(t);});

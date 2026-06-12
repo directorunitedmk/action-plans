@@ -106,11 +106,12 @@
 const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM', GID='593325688';
 const MAIN_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 const DAILY_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('Daily Perf Data')}`;
+const MIM_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('MiM DAL')}`;
 const REFRESH_MS=10*60*1000;
 const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
 const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid'};
 const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
-let model=null,daily=[];
+let model=null,daily=[],mim=null;
 // navigation state
 let nav={screen:'role',role:null,dealer:null,store:null,mgrMetric:0};
 
@@ -158,6 +159,17 @@ function buildDaily(rows){
       vals:{0:num(r[5]),1:num(r[6]),2:num(r[29]),3:num(r[26])}});
   }
   return recs;
+}
+// MiM DAL: col2 store, col5 MiM BANs, col6 MiM lines, col7 eligible BAN conv %, col8 eligible BANs, col10 postpaid target, col11 % to target
+function buildMim(rows){
+  const asOf=(rows[0]&&rows[0][2])||'';
+  const byStore={};
+  for(let i=2;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[2]||!r[3])continue;
+    byStore[r[2].trim()]={bans:num(r[5]),lines:num(r[6]),conv:(r[7]||'').trim(),elig:num(r[8]),target:num(r[10]),pct:(r[11]||'').trim()};
+  }
+  return {asOf,byStore};
 }
 function parseMDY(s){const p=s.split('/');return new Date(+p[2],+p[0]-1,+p[1])}
 const colorFor=p=>p>=100?'var(--green)':p>=70?'var(--amber)':'var(--red)';
@@ -263,6 +275,12 @@ function summaryCards(list){
   });
   const tdy=list.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
   h+=`<div class="sum" style="border-left:3px solid var(--blue)"><div class="lab">Today</div><div class="val" style="color:var(--blue)">+${tdy}</div><div class="sub">all metrics</div></div>`;
+  if(mim){
+    let lines=0,target=0,bans=0,elig=0;
+    list.forEach(s=>{const x=mim.byStore[s.store];if(x){lines+=x.lines;target+=x.target;bans+=x.bans;elig+=x.elig}});
+    if(target>0)h+=`<div class="sum" style="border-left:3px solid var(--magenta)"><div class="lab">MiM Lines</div><div class="val" style="color:var(--magenta)">${(lines/target*100).toFixed(0)}%</div><div class="sub">${lines}/${target} postpaid target</div></div>
+      <div class="sum" style="border-left:3px solid var(--magenta)"><div class="lab">MiM Conv</div><div class="val" style="color:var(--magenta)">${elig?(bans/elig*100).toFixed(0):0}%</div><div class="sub">${bans}/${elig} eligible BANs</div></div>`;
+  }
   return h+'</div>';
 }
 function storeRow(s){
@@ -317,6 +335,7 @@ function screenDetail(){
     </div>
     <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,120)}</div>
     <div class="panel"><h3>Metrics month-to-date</h3>${mets}</div>
+    ${mimPanel(s)}
     <div class="panel"><h3>Conversion & features</h3>
       <div class="statline"><span>Conversion MTD</span><b>${esc(s.convM)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayM)} QPAY)</span></b></div>
       <div class="statline"><span>Conversion today</span><b>${esc(s.convT)} <span style="color:var(--muted);font-weight:400">(${esc(s.qpayT)} QPAY)</span></b></div>
@@ -324,6 +343,22 @@ function screenDetail(){
       ${s.topFeat?`<div class="statline"><span>Top feature</span><b>${esc(s.topFeat)}</b></div>`:''}
     </div>
     ${liveBar()}
+  </div>`;
+}
+function mimPanel(s){
+  if(!mim)return '';
+  const x=mim.byStore[s.store];
+  if(!x)return '';
+  const pct=x.target?x.lines/x.target*100:0;
+  const conv=x.elig?x.bans/x.elig*100:0;
+  return `<div class="panel" style="border-left:3px solid var(--magenta)"><h3 style="color:var(--magenta)">MiM — Magenta in Metro · as of ${esc(mim.asOf)}</h3>
+    <div class="met">
+      <div class="top"><span class="nm">Lines vs Postpaid Target</span><span class="nums"><b>${x.lines}</b>/${x.target}<span class="pc" style="color:var(--magenta)">${pct.toFixed(0)}%</span></span></div>
+      <div class="bar"><div class="fill" style="background:var(--magenta);width:${Math.min(pct,100).toFixed(1)}%"></div></div>
+    </div>
+    <div class="statline"><span>MiM BANs</span><b>${x.bans}</b></div>
+    <div class="statline"><span>Eligible BANs</span><b>${x.elig}</b></div>
+    <div class="statline"><span>Eligible BAN conversion</span><b>${conv.toFixed(1)}%</b></div>
   </div>`;
 }
 function liveBar(){
@@ -351,15 +386,17 @@ document.getElementById('btnHome').addEventListener('click',()=>go({screen:'role
 
 async function loadData(){
   try{
-    const [r1,r2]=await Promise.all([
+    const [r1,r2,r3]=await Promise.all([
       fetch(MAIN_URL+'&t='+Date.now(),{cache:'no-store'}),
-      fetch(DAILY_URL+'&t='+Date.now(),{cache:'no-store'})
+      fetch(DAILY_URL+'&t='+Date.now(),{cache:'no-store'}),
+      fetch(MIM_URL+'&t='+Date.now(),{cache:'no-store'}).catch(()=>null)
     ]);
     if(r1.ok){
       const m=buildModel(parseCSV(await r1.text()));
       if(m.stores.length)model=m;
     }
     if(r2.ok)daily=buildDaily(parseCSV(await r2.text()));
+    if(r3&&r3.ok){const x=buildMim(parseCSV(await r3.text()));if(Object.keys(x.byStore).length)mim=x}
     if(model)renderApp();
     else document.getElementById('root').innerHTML='<div class="screen"><div class="err">Could not load data from the Google Sheet. Check your connection and reload.</div></div>';
   }catch(e){

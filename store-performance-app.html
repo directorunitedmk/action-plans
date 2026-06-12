@@ -787,12 +787,10 @@ function todayTable(list,prevScreen){
     const ct=pf(s.convT),cm=pf(s.convM),qpt=num(s.qpayT);
     const cdiff=ct-cm;
     const ccolor=cdiff>=0?'var(--green)':'var(--red)';
-    const convCell=qpt>0
-      ?`<div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+    const convCell=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px">
           <span style="font-weight:700;color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${ct.toFixed(0)}%<br><span style="font-size:.58rem;color:var(--muted);font-weight:400">${qpt} QPAY</span></span>
-          <span style="font-size:.65rem;color:${ccolor};font-weight:700;white-space:nowrap">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>
-        </div>`
-      :`<div style="color:var(--muted);font-size:.74rem">—</div>`;
+          ${qpt>0?`<span style="font-size:.65rem;color:${ccolor};font-weight:700;white-space:nowrap">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
+        </div>`;
     h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
       <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
     s.today.slice(0,4).forEach(v=>{

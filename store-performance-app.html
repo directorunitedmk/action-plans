@@ -371,23 +371,30 @@ function briefFor(list){
       else items.unshift({lvl:'win',ic:'🔥',store:'__agg__',id:'__agg__|convwin',t:`<b>Team converting at ${cv.toFixed(0)}% today</b> (${sales}/${qp} QPAYs) — above goal across the board.`});
     }
   }
-  // celebrations from completed missions
+  // check red flags BEFORE building any celebrations
+  const hasRedFlag=items.some(i=>i.lvl==='zero'||i.lvl==='crit');
+  // celebrations only when no red flags exist
   const wins=[];
-  Object.keys(missions.items).forEach(id=>{
-    const it=missions.items[id];
-    const st=id.split('|')[0];
-    const inScope=st==='__agg__'||list.some(s=>s.store===st);
-    if(it.done&&inScope){
-      wins.push({lvl:'party',ic:'🎉',id:'party|'+id,t:`<b>MISSION COMPLETE:</b> ${esc(it.winText||it.text)}`});
-      if(!it.celebrated){it.celebrated=true;if(!hasRedFlag)confettiPending=true}
-    }
-  });
+  if(!hasRedFlag){
+    Object.keys(missions.items).forEach(id=>{
+      const it=missions.items[id];
+      const st=id.split('|')[0];
+      const inScope=st==='__agg__'||list.some(s=>s.store===st);
+      if(it.done&&inScope){
+        wins.push({lvl:'party',ic:'🎉',id:'party|'+id,t:`<b>MISSION COMPLETE:</b> ${esc(it.winText||it.text)}`});
+        if(!it.celebrated){it.celebrated=true;confettiPending=true}
+      }
+    });
+  } else {
+    // still mark as celebrated so they don't queue up for later
+    Object.keys(missions.items).forEach(id=>{
+      const it=missions.items[id];
+      if(it.done&&!it.celebrated)it.celebrated=true;
+    });
+  }
   saveMissions(missions);
   const order={party:0,zero:1,crit:2,warn:3,win:4};
-  items=items.sort((a,b)=>(order[a.lvl]??5)-(order[b.lvl]??5));
-  // suppress all celebrations when red-flag items exist
-  const hasRedFlag=items.some(i=>i.lvl==='zero'||i.lvl==='crit');
-  if(!hasRedFlag){items=wins.concat(items)}
+  items=wins.concat(items.sort((a,b)=>(order[a.lvl]??5)-(order[b.lvl]??5)));
   return items.filter(i=>!isDismissed(i.id)).slice(0,9);
 }
 function briefHTML(list){

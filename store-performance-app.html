@@ -118,6 +118,16 @@
   /* confetti */
   .cf{position:fixed;top:-12px;width:9px;height:14px;z-index:99;pointer-events:none;animation:fall linear forwards}
   @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}
+  /* mobile today-table: no forced min-width, tighter cells */
+  .tday-tbl{width:100%;border-collapse:collapse;font-size:.74rem}
+  .tday-tbl th,.tday-tbl td{padding:5px 5px}
+  .tday-tbl th:first-child,.tday-tbl td:first-child{padding-left:4px}
+  .tday-tbl .conv-col{border-left:1px solid var(--border);text-align:center;padding:4px 5px}
+  @media(max-width:400px){
+    .tday-tbl{font-size:.67rem}
+    .tday-tbl th,.tday-tbl td{padding:4px 3px}
+    .tday-tbl .conv-col{padding:3px 4px}
+  }
 </style>
 </head>
 <body>
@@ -774,48 +784,47 @@ function todayTable(list,prevScreen){
   const aggConvM=totalQpayM>0?totalSalesM/totalQpayM*100:0;
   const aggDiff=aggConvT-aggConvM;
   let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table style="width:100%;border-collapse:collapse;font-size:.74rem;min-width:440px">
+    <table class="tday-tbl">
     <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
-      <th style="text-align:left;padding:5px 6px">Store</th>`;
-  colHeaders.forEach(n=>h+=`<th style="text-align:center;padding:5px 5px">${n}</th>`);
-  h+=`<th style="text-align:center;padding:5px 6px">Total</th>
-      <th style="text-align:center;padding:5px 8px;border-left:1px solid var(--border)">Conv today <span style="font-weight:400;font-size:.58rem">vs MTD</span></th>
+      <th style="text-align:left">Store</th>`;
+  colHeaders.forEach(n=>h+=`<th style="text-align:center">${n}</th>`);
+  h+=`<th style="text-align:center">Total</th>
+      <th class="conv-col">Conv <span style="font-weight:400;font-size:.58rem">vs MTD</span></th>
     </tr></thead><tbody>`;
   sorted.forEach(s=>{
     const total=s.today.reduce((sum,v)=>sum+v,0);
     const ct=pf(s.convT),cm=pf(s.convM),qpt=num(s.qpayT);
     const cdiff=ct-cm;
     const ccolor=cdiff>=0?'var(--green)':'var(--red)';
-    const convCell=`<div style="display:flex;justify-content:space-between;align-items:center;gap:3px">
-          <span style="font-weight:700;color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${ct.toFixed(0)}%<br><span style="font-size:.58rem;color:var(--muted);font-weight:400">${qpt} QPAY</span></span>
-          ${qpt>0?`<span style="font-size:.65rem;color:${ccolor};font-weight:700;white-space:nowrap">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
+    const convCell=`<div style="display:flex;justify-content:space-between;align-items:center;gap:2px">
+          <span style="font-weight:700;color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'};font-size:.76rem">${ct.toFixed(0)}%<br><span style="font-size:.56rem;color:var(--muted);font-weight:400">${qpt} QPAY</span></span>
+          ${qpt>0?`<span style="font-size:.62rem;color:${ccolor};font-weight:700;white-space:nowrap">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
         </div>`;
     h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
-      <td style="padding:5px 6px;font-weight:600;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
+      <td style="font-weight:600;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
     s.today.slice(0,4).forEach(v=>{
       const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
-      h+=`<td style="text-align:center;padding:5px 5px;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
+      h+=`<td style="text-align:center;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
     });
     const rowTotal=s.today.slice(0,4).reduce((sum,v)=>sum+v,0);
     const tc=rowTotal>0?'var(--green)':'var(--red)';
-    h+=`<td style="text-align:center;padding:5px 6px;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td>
-        <td style="text-align:center;padding:5px 8px;border-left:1px solid var(--border);line-height:1.2">${convCell}</td></tr>`;
+    h+=`<td style="text-align:center;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td>
+        <td class="conv-col" style="line-height:1.2">${convCell}</td></tr>`;
   });
   // totals row
   const tots=[0,1,2,3].map(i=>list.reduce((s,st)=>s+st.today[i],0));
   const grand=tots.reduce((s,v)=>s+v,0);
   const aggDiffColor=aggDiff>=0?'var(--green)':'var(--red)';
-  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td style="padding:5px 6px">TOTAL</td>`;
-  tots.forEach(v=>h+=`<td style="text-align:center;padding:5px 5px;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
-  h+=`<td style="text-align:center;padding:5px 6px;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td>
-      <td style="padding:5px 8px;border-left:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td>TOTAL</td>`;
+  tots.forEach(v=>h+=`<td style="text-align:center;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
+  h+=`<td style="text-align:center;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td>
+      <td class="conv-col">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
           <span style="font-weight:700;color:${aggConvT>=100?'var(--green)':aggConvT>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${aggConvT.toFixed(0)}%<br><span style="font-size:.58rem;color:var(--muted);font-weight:400">${totalQpayT} QPAY</span></span>
           <span style="font-size:.65rem;color:${aggDiffColor};font-weight:700;white-space:nowrap">${aggDiff>=0?'▲':'▼'}${Math.abs(aggDiff).toFixed(1)}%</span>
         </div>
       </td></tr>`;
-  h+='</tbody></table></div>';
+  h+='</tbody></table>';
   // conversion footer (MTD context)
   const clabel=aggDiff>=0?`▲ ${aggDiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(aggDiff).toFixed(1)}% below MTD`;
   h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">

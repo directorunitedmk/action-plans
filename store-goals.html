@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tomorrow Telecom · Monthly Goals</title>
+<style>
+  :root{--bg:#f1f4f9;--card:#ffffff;--text:#16203a;--muted:#64748b;--border:#e2e8f0;--track:#eef1f6;
+    --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb;--magenta:#e20074;
+    --grad:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#e20074 130%)}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+  .phone{width:100%;max-width:520px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow-x:hidden}
+  .appbar{background:var(--grad);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(16,24,40,.18)}
+  .appbar .logo{background:rgba(255,255,255,.18);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+  .appbar .titles{flex:1;min-width:0}
+  .appbar h1{font-size:1.05rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appbar .sub{font-size:.72rem;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .screen{flex:1;padding:16px 16px 30px;animation:slidein .22s ease}
+  @keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .livebar{display:flex;align-items:center;gap:7px;justify-content:center;font-size:.72rem;color:var(--muted);padding:4px 0 12px}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  /* hero header */
+  .ghead{background:var(--grad);color:#fff;border-radius:18px;padding:18px 18px 20px;margin-bottom:14px;box-shadow:0 4px 16px rgba(30,58,138,.25)}
+  .ghead .kick{font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;opacity:.85}
+  .ghead h2{font-size:1.55rem;margin:3px 0 2px;font-weight:800}
+  .ghead .who{font-size:.82rem;opacity:.92}
+  .ghead .bigwrap{display:flex;align-items:flex-end;gap:12px;margin-top:14px}
+  .ghead .big{font-size:2.6rem;font-weight:800;line-height:1}
+  .ghead .biglab{font-size:.72rem;opacity:.85;margin-bottom:5px;line-height:1.3}
+  .chiprow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .chip{background:rgba(255,255,255,.16);border-radius:20px;padding:5px 11px;font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:5px}
+  .chip.up{background:rgba(255,255,255,.22)}
+  .ghead-tbl{width:100%;border-collapse:collapse;margin-top:14px}
+  .ghead-tbl th{font-size:.6rem;text-transform:uppercase;letter-spacing:.5px;opacity:.8;font-weight:600;padding:0 0 6px;text-align:right}
+  .ghead-tbl th:first-child{text-align:left}
+  .ghead-tbl td{font-size:.84rem;padding:6px 0;border-top:1px solid rgba(255,255,255,.16);text-align:right;color:#fff}
+  .ghead-tbl td:first-child{text-align:left;font-weight:600}
+  .ghead-tbl td.g{font-weight:800;font-size:.95rem}
+  .ghead-tbl .ar{font-weight:700;font-size:.76rem;white-space:nowrap}
+  .ar.good{color:#4ade80} .ar.bad{color:#f87171} .ar.flat{color:rgba(255,255,255,.6)}
+  .ghead .leg{font-size:.64rem;opacity:.92;margin-top:9px}
+  /* brief / what changed */
+  .brief-head{display:flex;align-items:center;gap:8px;font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:4px 2px 9px}
+  .brief-head .tag{color:var(--blue);font-weight:700}
+  .bitem{display:flex;gap:11px;align-items:flex-start;border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:.84rem;line-height:1.45;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .bitem .bic{font-size:1.05rem;flex-shrink:0;margin-top:1px}
+  .bitem b{font-weight:700}
+  .bitem.up{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
+  .bitem.dn{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+  .bitem.mag{background:#fdf2f8;border:1px solid #fbcfe8;color:#831843}
+  .bitem.flat{background:#f8fafc;border:1px solid var(--border);color:#334155}
+  /* summary grid */
+  .list-title{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:16px 2px 10px}
+  .sumgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:4px}
+  .sum{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:11px 12px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .sum .lab{font-size:.64rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sum .val{font-size:1.4rem;font-weight:800;margin:3px 0 1px}
+  .sum .delta{font-size:.7rem;font-weight:700}
+  .sum .mini{margin-top:6px}
+  .up{color:var(--green)} .dn{color:var(--red)} .flat{color:var(--muted)} .mag{color:var(--magenta)}
+  .good{color:var(--green)} .bad{color:var(--red)}
+  .chip.good{background:rgba(22,163,74,.95);color:#fff} .chip.bad{background:rgba(220,38,38,.95);color:#fff}
+  /* panel */
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px 16px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .panel h3{font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .legend{display:flex;gap:14px;font-size:.68rem;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .swatch{width:14px;height:0;border-top:2px solid}
+  .swatch.dash{border-top-style:dashed}
+  /* store card */
+  .store{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 15px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .store .shead{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .store .av{width:40px;height:40px;border-radius:12px;background:rgba(37,99,235,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0}
+  .store .sinfo{flex:1;min-width:0}
+  .store .sinfo h3{font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .store .sinfo p{font-size:.7rem;color:var(--muted);margin-top:1px}
+  .store .sright{text-align:right;flex-shrink:0}
+  .store .sright .n{font-size:1.25rem;font-weight:800;line-height:1}
+  .store .sright .l{font-size:.62rem;color:var(--muted)}
+  .mtbl{width:100%;border-collapse:collapse;margin-top:4px}
+  .mtbl td,.mtbl th{padding:6px 0;border-bottom:1px solid var(--track);font-size:.8rem;text-align:right}
+  .mtbl th{font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600}
+  .mtbl td:first-child,.mtbl th:first-child{text-align:left}
+  .mtbl tr:last-child td{border-bottom:none}
+  .mtbl .nm{font-weight:600;color:var(--text)}
+  .mtbl .goal{font-weight:700}
+  .mtbl .d{font-weight:700;width:74px}
+  .err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:14px;font-size:.85rem;text-align:center;margin:12px 0}
+  #loading{text-align:center;color:var(--muted);padding:80px 20px;font-size:.95rem}
+  footer{text-align:center;font-size:.68rem;color:var(--muted);padding:6px 12px 24px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar">
+    <div class="logo">📶</div>
+    <div class="titles"><h1 id="barTitle">Monthly Goals</h1><div class="sub" id="barSub">Loading…</div></div>
+  </div>
+  <div id="root"><div id="loading">Loading goals from Google Sheet…</div></div>
+  <footer id="foot"></footer>
+</div>
+<script>
+/* ===== config ===== */
+const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM';
+const GOALS_URL=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Goals`;
+const BAKED_DEALER="";
+const params=new URLSearchParams(location.search);
+const DEALER=(params.get('dealer')||BAKED_DEALER).trim();
+/* store map keyed by Goals-tab "Door Name" (MATLOCK & I-20 belong to Sid) */
+const DEALER_STORES={
+  'Alnawaz Suhani':['GREEN OAKS','WEST PIONEER','6TH','HARRY HINES','MONTFORT','FRANKFORD'],
+  'Ekta Kotadiya':['SYCAMORE','CAMP BOWIE','LEWISVILLE'],
+  'Hangsuk Cho':['NORTH MAIN','SH-121'],
+  'James Han':['JACKSBORO','MIDWESTERN'],
+  'Shawnawaz Khoja':['ROSEDALE','BEACH WESTERN','WESTERN CENTER','FM ROUND GROVE','HALTOM','FERGUSON','SAMUEL'],
+  'Sid':['MATLOCK','I-20'],
+  'Suleman Suhani':['DECATUR'],
+  'Bader Joudeh':['BELTLINE','BROADWAY','MOTLEY','FRONTAGE']
+};
+/* 9 goal metrics — CSV columns 3..11 */
+const METRICS=[
+  {name:'Gross Act',primary:true},
+  {name:'Voice Acts'},
+  {name:'Voice Reacts'},
+  {name:'BTS Acts'},
+  {name:'BTS Reacts'},
+  {name:'HSI Activations'},
+  {name:'HSI Reactivations'},
+  {name:'Magenta in Metro',mag:true},
+  {name:'Perf Bonus Target'}
+];
+const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const MNAME=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MSHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const EMBEDDED=[["SYCAMORE","Jan-2026",179,123,13,29,2,11,1,10,189],["ROSEDALE","Jan-2026",166,99,20,34,2,10,1,8,174],["FRONTAGE","Jan-2026",116,78,5,23,2,7,1,4,120],["JACKSBORO","Jan-2026",64,44,4,12,0,4,0,4,68],["CAMP BOWIE","Jan-2026",118,81,7,22,1,7,0,6,124],["I-20","Jan-2026",68,40,9,13,2,4,0,3,71],["MOTLEY","Jan-2026",159,110,6,30,2,10,1,7,166],["WEST PIONEER","Jan-2026",101,68,6,20,1,5,1,7,108],["WESTERN CENTER","Jan-2026",77,46,6,20,1,4,0,4,81],["MIDWESTERN","Jan-2026",38,24,4,7,0,3,0,2,40],["DECATUR","Jan-2026",66,44,5,12,1,4,0,3,69],["BEACH WESTERN","Jan-2026",76,42,10,18,1,5,0,4,80],["GREEN OAKS","Jan-2026",69,44,7,14,0,4,0,4,73],["MATLOCK","Jan-2026",70,45,6,14,1,4,0,5,75],["LEWISVILLE","Jan-2026",90,56,9,19,1,5,0,4,94],["SAMUEL","Jan-2026",164,106,12,34,2,9,1,10,174],["FM ROUND GROVE","Jan-2026",82,46,12,18,1,5,0,4,86],["BROADWAY","Jan-2026",49,31,7,7,1,3,0,2,51],["NORTH MAIN","Jan-2026",44,23,10,7,1,3,0,4,48],["SH-121","Jan-2026",45,27,8,7,0,3,0,3,48],["FERGUSON","Jan-2026",136,83,9,35,1,7,1,8,144],["HARRY HINES","Jan-2026",77,51,5,14,2,5,0,4,81],["HALTOM","Jan-2026",159,97,12,39,1,9,1,9,168],["6TH","Jan-2026",149,94,13,30,2,9,1,10,159],["BELTLINE","Jan-2026",235,161,15,42,1,15,1,11,246],["MONTFORT","Jan-2026",147,93,14,29,1,9,1,10,157],["FRANKFORD","Jan-2026",117,67,17,24,1,7,1,6,123],["SYCAMORE","Feb-2026",228,158,14,39,4,12,1,11,239],["ROSEDALE","Feb-2026",196,118,23,42,1,11,1,8,204],["FRONTAGE","Feb-2026",126,86,6,24,2,7,1,3,129],["JACKSBORO","Feb-2026",82,59,3,16,0,4,0,4,86],["CAMP BOWIE","Feb-2026",132,91,8,24,2,7,0,7,139],["I-20","Feb-2026",81,46,13,16,2,4,0,3,84],["MOTLEY","Feb-2026",204,140,9,40,3,11,1,7,211],["WEST PIONEER","Feb-2026",129,86,11,23,3,5,1,7,136],["WESTERN CENTER","Feb-2026",89,53,7,24,1,4,0,4,93],["MIDWESTERN","Feb-2026",46,31,4,9,0,2,0,2,48],["DECATUR","Feb-2026",76,51,6,14,1,4,0,3,79],["BEACH WESTERN","Feb-2026",90,52,8,24,1,5,0,4,94],["GREEN OAKS","Feb-2026",84,55,8,17,0,4,0,5,89],["MATLOCK","Feb-2026",86,55,9,17,1,4,0,5,91],["LEWISVILLE","Feb-2026",102,71,5,20,1,5,0,4,106],["SAMUEL","Feb-2026",192,124,16,39,2,10,1,10,202],["FM ROUND GROVE","Feb-2026",102,57,16,22,2,5,0,4,106],["BROADWAY","Feb-2026",54,35,6,8,2,3,0,2,56],["NORTH MAIN","Feb-2026",52,28,12,9,0,3,0,4,56],["SH-121","Feb-2026",57,35,10,9,0,3,0,4,61],["FERGUSON","Feb-2026",165,98,18,40,1,7,1,8,173],["HARRY HINES","Feb-2026",95,62,8,18,2,5,0,5,100],["HALTOM","Feb-2026",202,130,12,47,2,10,1,9,211],["6TH","Feb-2026",188,119,17,38,3,10,1,11,199],["BELTLINE","Feb-2026",275,188,18,52,2,14,1,11,286],["MONTFORT","Feb-2026",173,112,17,33,1,9,1,10,183],["FRANKFORD","Feb-2026",144,85,21,28,1,8,1,6,150],["SYCAMORE","Mar-2026",168,114,10,28,2,13,1,57,225],["ROSEDALE","Mar-2026",152,92,13,33,0,13,1,49,201],["FRONTAGE","Mar-2026",83,56,3,15,2,7,0,17,100],["JACKSBORO","Mar-2026",62,43,2,12,0,5,0,23,85],["CAMP BOWIE","Mar-2026",93,62,5,17,1,8,0,35,128],["I-20","Mar-2026",65,35,11,12,2,5,0,19,84],["MOTLEY","Mar-2026",167,111,6,33,3,13,1,43,210],["WEST PIONEER","Mar-2026",96,60,9,17,2,7,1,38,134],["WESTERN CENTER","Mar-2026",68,38,4,20,1,5,0,21,89],["MIDWESTERN","Mar-2026",27,17,2,5,0,3,0,10,37],["DECATUR","Mar-2026",55,35,4,10,1,5,0,18,73],["BEACH WESTERN","Mar-2026",69,40,5,17,1,6,0,21,90],["GREEN OAKS","Mar-2026",65,40,8,12,0,5,0,25,90],["MATLOCK","Mar-2026",69,42,8,13,1,5,0,26,95],["LEWISVILLE","Mar-2026",73,51,2,14,1,5,0,22,95],["SAMUEL","Mar-2026",149,92,12,31,1,12,1,54,203],["FM ROUND GROVE","Mar-2026",72,42,9,16,0,5,0,21,93],["BROADWAY","Mar-2026",44,27,5,6,2,4,0,11,55],["NORTH MAIN","Mar-2026",42,21,9,7,2,3,0,22,64],["SH-121","Mar-2026",46,30,5,7,0,4,0,20,66],["FERGUSON","Mar-2026",137,78,16,31,2,9,1,43,180],["HARRY HINES","Mar-2026",77,50,6,14,1,6,0,26,103],["HALTOM","Mar-2026",155,99,8,34,1,12,1,49,204],["6TH","Mar-2026",141,87,9,30,2,12,1,59,200],["BELTLINE","Mar-2026",211,140,13,38,2,17,1,59,270],["MONTFORT","Mar-2026",131,78,14,26,1,11,1,58,189],["FRANKFORD","Mar-2026",104,60,13,21,0,9,1,34,138],["SYCAMORE","Apr-2026",185,128,14,30,2,10,1,27,212],["ROSEDALE","Apr-2026",167,103,15,35,3,10,1,24,191],["FRONTAGE","Apr-2026",88,61,3,17,1,5,1,8,96],["JACKSBORO","Apr-2026",80,55,5,16,0,4,0,12,92],["CAMP BOWIE","Apr-2026",101,67,9,18,1,6,0,16,117],["I-20","Apr-2026",71,40,13,13,1,4,0,9,80],["MOTLEY","Apr-2026",187,132,7,34,2,11,1,22,209],["WEST PIONEER","Apr-2026",106,69,11,19,2,5,0,18,124],["WESTERN CENTER","Apr-2026",66,39,3,20,1,3,0,10,76],["MIDWESTERN","Apr-2026",30,20,2,6,0,2,0,5,35],["DECATUR","Apr-2026",59,40,4,11,1,3,0,8,67],["BEACH WESTERN","Apr-2026",83,52,5,20,1,5,0,11,94],["GREEN OAKS","Apr-2026",72,41,14,13,0,4,0,11,83],["MATLOCK","Apr-2026",77,46,14,13,0,4,0,13,90],["LEWISVILLE","Apr-2026",77,55,2,15,1,4,0,9,86],["SAMUEL","Apr-2026",171,108,15,35,2,10,1,27,198],["FM ROUND GROVE","Apr-2026",71,43,9,15,0,3,1,10,81],["BROADWAY","Apr-2026",47,31,3,6,2,5,0,4,51],["NORTH MAIN","Apr-2026",44,25,8,7,2,2,0,10,54],["SH-121","Apr-2026",52,33,8,8,0,3,0,10,62],["FERGUSON","Apr-2026",136,83,14,29,2,7,1,21,157],["HARRY HINES","Apr-2026",86,56,8,15,1,5,1,13,99],["HALTOM","Apr-2026",164,108,10,36,1,8,1,24,188],["6TH","Apr-2026",155,98,14,31,2,9,1,29,184],["BELTLINE","Apr-2026",219,148,18,39,1,12,1,26,245],["MONTFORT","Apr-2026",146,88,20,28,1,8,1,26,172],["FRANKFORD","Apr-2026",115,69,17,21,1,7,0,16,131],["SYCAMORE","May-2026",184,118,11,41,3,10,1,13,197],["ROSEDALE","May-2026",159,95,12,39,2,10,1,12,171],["FRONTAGE","May-2026",88,58,4,19,1,6,0,4,92],["JACKSBORO","May-2026",83,50,8,20,0,5,0,6,89],["CAMP BOWIE","May-2026",103,65,10,21,1,6,0,8,111],["I-20","May-2026",69,38,11,15,1,4,0,5,74],["MOTLEY","May-2026",190,123,10,43,1,11,2,11,201],["WEST PIONEER","May-2026",103,64,10,22,1,6,0,9,112],["WESTERN CENTER","May-2026",62,35,4,18,1,4,0,4,66],["MIDWESTERN","May-2026",27,15,3,7,0,2,0,2,29],["DECATUR","May-2026",59,37,5,13,1,3,0,4,63],["BEACH WESTERN","May-2026",82,51,6,20,0,5,0,5,87],["GREEN OAKS","May-2026",69,37,13,15,0,4,0,5,74],["MATLOCK","May-2026",76,43,12,17,0,4,0,6,82],["LEWISVILLE","May-2026",77,51,4,16,2,4,0,4,81],["SAMUEL","May-2026",183,110,14,45,1,12,1,15,198],["FM ROUND GROVE","May-2026",66,42,4,15,0,4,1,5,71],["BROADWAY","May-2026",49,32,3,8,0,6,0,2,51],["NORTH MAIN","May-2026",46,24,7,10,2,3,0,4,50],["SH-121","May-2026",54,30,8,11,1,4,0,6,60],["FERGUSON","May-2026",131,77,11,32,2,8,1,10,141],["HARRY HINES","May-2026",84,55,4,18,1,6,0,6,90],["HALTOM","May-2026",161,104,9,37,1,9,1,13,174],["6TH","May-2026",154,95,11,36,1,10,1,15,169],["BELTLINE","May-2026",226,141,18,49,2,14,2,13,239],["MONTFORT","May-2026",145,83,20,31,1,9,1,13,158],["FRANKFORD","May-2026",117,64,18,26,1,7,1,8,125],["SYCAMORE","Jun-2026",169,111,15,28,4,10,1,32,201],["ROSEDALE","Jun-2026",139,83,14,31,1,9,1,27,166],["FRONTAGE","Jun-2026",81,55,2,18,0,5,1,10,91],["JACKSBORO","Jun-2026",74,47,8,15,0,4,0,13,87],["CAMP BOWIE","Jun-2026",94,61,8,18,1,6,0,20,114],["I-20","Jun-2026",63,36,9,13,1,4,0,11,74],["MOTLEY","Jun-2026",172,115,10,34,1,11,1,24,196],["WEST PIONEER","Jun-2026",98,59,12,20,1,5,1,22,120],["WESTERN CENTER","Jun-2026",58,33,6,15,1,3,0,12,70],["MIDWESTERN","Jun-2026",25,20,1,2,0,2,0,6,31],["DECATUR","Jun-2026",52,34,5,9,1,3,0,10,62],["BEACH WESTERN","Jun-2026",76,47,5,18,1,5,0,12,88],["GREEN OAKS","Jun-2026",65,35,11,13,2,4,0,14,79],["MATLOCK","Jun-2026",70,40,12,14,0,4,0,15,85],["LEWISVILLE","Jun-2026",75,53,3,13,2,4,0,12,87],["SAMUEL","Jun-2026",178,106,14,45,1,11,1,31,209],["FM ROUND GROVE","Jun-2026",59,35,5,13,1,4,1,12,71],["BROADWAY","Jun-2026",49,33,3,9,0,4,0,6,55],["NORTH MAIN","Jun-2026",37,22,5,6,2,2,0,12,49],["SH-121","Jun-2026",47,27,8,8,1,3,0,12,59],["FERGUSON","Jun-2026",114,66,10,29,1,7,1,24,138],["HARRY HINES","Jun-2026",75,49,3,16,1,5,1,15,90],["HALTOM","Jun-2026",152,91,13,37,1,9,1,28,180],["6TH","Jun-2026",153,92,16,33,2,9,1,33,186],["BELTLINE","Jun-2026",189,119,17,40,1,11,1,33,222],["MONTFORT","Jun-2026",137,81,18,29,0,8,1,32,169],["FRANKFORD","Jun-2026",107,59,19,21,1,6,1,19,126]];
+
+/* ===== parsing ===== */
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur=''}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+      else if(ch!=='\r')cur+=ch;}}
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+const num=s=>parseInt(String(s).replace(/[,$\s]/g,''),10)||0;
+function parseMon(s){const m=String(s).trim().match(/^([A-Za-z]{3})-(\d{4})$/);
+  if(!m)return null;const mi=MONTHS[m[1].toLowerCase()];if(mi==null)return null;
+  return{y:+m[2],m:mi,key:+m[2]*12+mi};}
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const title=s=>String(s).toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+const initials=s=>String(s).split(/\s+/).map(w=>w[0]).join('').slice(0,3).toUpperCase();
+const fmt=n=>n.toLocaleString();
+const sign=n=>n>0?'+'+fmt(n):fmt(n);
+
+function buildData(raw){
+  const stores=DEALER_STORES[DEALER]||[];
+  const set=new Set(stores.map(s=>s.toUpperCase()));
+  const recs=[];const monMap={};
+  raw.forEach(r=>{
+    if(!r||!r[0]||!r[1])return;
+    const door=String(r[0]).trim().toUpperCase();
+    if(!set.has(door))return;
+    const mon=parseMon(r[1]);if(!mon)return;
+    const vals=[];let any=false;
+    for(let k=0;k<9;k++){const v=num(r[2+k]);vals.push(v);if(v)any=true;}
+    if(!any)return;
+    recs.push({door:String(r[0]).trim(),mon,vals});
+    monMap[mon.key]=mon;
+  });
+  const months=Object.values(monMap).sort((a,b)=>a.key-b.key);
+  return {recs,months,stores};
+}
+/* convert a freshly fetched Goals CSV into the same [door,monStr,v0..v8] record shape */
+function csvToRecords(rows){
+  const out=[];
+  for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r[0]||!r[1])continue;
+    if(!/^[A-Za-z]{3}-\d{4}$/.test(String(r[1]).trim()))continue;
+    out.push([r[0],r[1],num(r[3]),num(r[4]),num(r[5]),num(r[6]),num(r[7]),num(r[8]),num(r[9]),num(r[10]),num(r[11])]);
+  }
+  return out;
+}
+function totalsByMonth(recs,months){
+  const idx={};const out=months.map((mn,i)=>{idx[mn.key]=i;return new Array(9).fill(0)});
+  recs.forEach(r=>{const i=idx[r.mon.key];r.vals.forEach((v,k)=>out[i][k]+=v)});
+  return out; // out[monthIdx][metricIdx]
+}
+function storeSeries(recs,months,door){
+  const idx={};months.forEach((mn,i)=>idx[mn.key]=i);
+  const out=months.map(()=>new Array(9).fill(null));
+  recs.filter(r=>r.door===door).forEach(r=>{out[idx[r.mon.key]]=r.vals.slice()});
+  return out;
+}
+
+/* ===== mini chart ===== */
+function miniSpark(series,months,color){
+  const vals=series.map(v=>v==null?0:v);
+  if(vals.length<2)return '';
+  const W=240,H=50,L=8,R=8,T=7,B=15,pw=W-L-R,ph=H-T-B;
+  const mx=Math.max(...vals),mn=Math.min(...vals,0),span=Math.max(mx-mn,1);
+  const X=i=>L+pw*i/(vals.length-1),Y=v=>T+ph*(1-(v-mn)/span);
+  const pts=vals.map((v,i)=>X(i)+','+Y(v)).join(' ');
+  const last=vals[vals.length-1],first=vals.find(v=>v>0)||vals[0];
+  const col=color||(last<=first?'#16a34a':'#dc2626'); // lower target = good = green
+  let lbl='';
+  if(months)months.forEach((mn,i)=>{const isL=i===months.length-1;
+    lbl+=`<text x="${X(i)}" y="${H-3}" text-anchor="middle" font-size="8.5" fill="${isL?'#16203a':'#94a3b8'}" font-weight="${isL?'700':'400'}">${MSHORT[mn.m]}</text>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px">
+    <polyline fill="none" stroke="${col}" stroke-width="2" points="${pts}"/>
+    <circle cx="${X(vals.length-1)}" cy="${Y(last)}" r="2.8" fill="${col}"/>${lbl}</svg>`;
+}
+function trendChart(months,series,h=150){
+  const W=480,H=h,L=30,R=14,T=16,B=24,pw=W-L-R,ph=H-T-B;
+  const mx=Math.max(...series,1),yMax=mx*1.12;
+  const X=i=>L+pw*(series.length<=1?0.5:i/(series.length-1)),Y=v=>T+ph*(1-v/yMax);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px" xmlns="http://www.w3.org/2000/svg">`;
+  // gridlines
+  for(let g=0;g<=2;g++){const v=yMax*g/2;const y=Y(v);
+    s+=`<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="#eef1f6" stroke-width="1"/>
+        <text x="${L-5}" y="${y+3}" text-anchor="end" font-size="9" fill="#94a3b8">${Math.round(v)}</text>`;}
+  const pts=series.map((v,i)=>[X(i),Y(v),v,i]);
+  const down=series[series.length-1]<=series[0];
+  const col=down?'#16a34a':'#dc2626'; // downward target trend = good = green
+  // area
+  s+=`<polyline fill="none" stroke="${col}" stroke-width="2.6" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+  pts.forEach(p=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.2" fill="${col}"><title>${MSHORT[months[p[3]].m]}: ${p[2]}</title></circle>
+    <text x="${p[0]}" y="${p[1]-8}" text-anchor="middle" font-size="9.5" font-weight="700" fill="${col}">${p[2]}</text>
+    <text x="${p[0]}" y="${H-7}" text-anchor="middle" font-size="9.5" fill="#64748b">${MSHORT[months[p[3]].m]}</text>`});
+  return s+'</svg>';
+}
+
+/* ===== delta helpers ===== */
+function deltaHTML(cur,prev){
+  if(prev==null)return '<span class="flat">— new</span>';
+  const d=cur-prev;const pct=prev!==0?Math.round(d/prev*100):(cur>0?100:0);
+  if(d>0)return `<span class="bad">▲ +${fmt(d)} (${pct>0?'+':''}${pct}%)</span>`;  // higher target = red
+  if(d<0)return `<span class="good">▼ ${fmt(d)} (${pct}%)</span>`;                  // lower target = green
+  return '<span class="flat">— 0%</span>';
+}
+function chipHTML(cur,prev){
+  if(prev==null||prev===cur)return `<span class="chip">vs last month: no change</span>`;
+  const d=cur-prev,pct=prev!==0?Math.round(d/prev*100):100;
+  const cls=d<0?'good':'bad';
+  const arrow=d>0?'▲':'▼';
+  return `<span class="chip ${cls}">${arrow} ${sign(d)} (${pct>0?'+':''}${pct}%) vs ${MSHORT[(prevMonth&&prevMonth.m)]}</span>`;
+}
+
+let prevMonth=null;
+/* ===== render ===== */
+function render(data,live){
+  const root=document.getElementById('root');
+  const {recs,months,stores}=data;
+  if(!stores.length){root.innerHTML=`<div class="screen"><div class="err">No store mapping found for "<b>${esc(DEALER)}</b>". Check the dealer name.</div></div>`;return;}
+  if(!months.length){root.innerHTML=`<div class="screen"><div class="err">No goal rows found yet for ${esc(DEALER)}'s stores.</div></div>`;return;}
+  const totals=totalsByMonth(recs,months);
+  const hi=months.length-1, lo=months.length-2;
+  const cur=totals[hi], prev=lo>=0?totals[lo]:null;
+  const hMon=months[hi];prevMonth=lo>=0?months[lo]:null;
+  const postMonthIdx=(hMon.m+11)%12;
+  document.getElementById('barTitle').textContent=DEALER;
+  document.getElementById('barSub').textContent=`${MNAME[hMon.m]} ${hMon.y} Goals`;
+
+  // header — compact snapshot of every metric
+  let trows='';
+  METRICS.forEach((m,k)=>{
+    const c=cur[k],p=prev?prev[k]:null;
+    let ar='<span class="ar flat">—</span>';
+    if(p!=null){const d=c-p,pct=p!==0?Math.round(d/p*100):(c>0?100:0);
+      if(d>0)ar=`<span class="ar bad">▲ +${fmt(d)} (${pct>0?'+':''}${pct}%)</span>`;
+      else if(d<0)ar=`<span class="ar good">▼ ${fmt(d)} (${pct}%)</span>`;}
+    trows+=`<tr><td>${esc(m.name)}</td><td class="g">${fmt(c)}</td><td>${ar}</td></tr>`;
+  });
+  let h=`<div class="screen">
+    <div class="ghead">
+      <div class="kick">📋 Monthly Goals</div>
+      <h2>${MNAME[hMon.m]} ${hMon.y}</h2>
+      <div class="who">${esc(DEALER)} · ${stores.length} store${stores.length>1?'s':''}</div>
+      <table class="ghead-tbl"><thead><tr><th>Metric</th><th>${MSHORT[hMon.m]} goal</th><th>vs ${prevMonth?MSHORT[prevMonth.m]:'—'}</th></tr></thead>
+      <tbody>${trows}</tbody></table>
+      <div class="leg">▼ <span style="color:#4ade80;font-weight:700">lower than ${prevMonth?MSHORT[prevMonth.m]:'last'} = good</span> · ▲ <span style="color:#f87171;font-weight:700">higher</span></div>
+    </div>`;
+
+  // what changed (brief)
+  if(prev){
+    const movers=METRICS.map((m,k)=>({m,k,d:cur[k]-prev[k]})).filter(x=>x.d!==0)
+      .sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,4);
+    if(movers.length){
+      h+=`<div class="brief-head">⚡ What changed <span class="tag">· ${MSHORT[prevMonth.m]} → ${MSHORT[hMon.m]}</span></div>`;
+      movers.forEach(({m,k,d})=>{
+        const pct=prev[k]!==0?Math.round(d/prev[k]*100):100;
+        const cls=d<0?'up':'dn'; // lower target = green(good), higher = red(bad)
+        const ic=d<0?'📉':'📈';
+        const dir=d>0?'up':'down';
+        h+=`<div class="bitem ${cls}"><span class="bic">${ic}</span><span><b>${esc(m.name)} goal ${dir} ${sign(d).replace('+','')} (${pct>0?'+':''}${pct}%)</b> — from ${fmt(prev[k])} in ${MSHORT[prevMonth.m]} to <b>${fmt(cur[k])}</b> in ${MSHORT[hMon.m]}.</span></div>`;
+      });
+    }
+  }
+
+  // per-metric monthly trend graphs
+  h+=`<div class="list-title">Monthly trend · Jan–${MSHORT[hMon.m]} goals</div><div class="sumgrid">`;
+  METRICS.forEach((m,k)=>{
+    const series=totals.map(t=>t[k]);
+    const col=m.mag?'#e20074':null;
+    h+=`<div class="sum"${m.primary?' style="grid-column:span 2;border-left:3px solid var(--blue)"':m.mag?' style="border-left:3px solid var(--magenta)"':''}>
+      <div class="lab">${esc(m.name)} · ${fmt(cur[k])}</div>
+      <div class="mini">${miniSpark(series,months,col)}</div>
+    </div>`;
+  });
+  h+='</div>';
+
+  // gross act trend chart
+  h+=`<div class="panel"><h3>Gross Act goal · monthly trend</h3>${trendChart(months,totals.map(t=>t[0]))}
+    <div class="legend"><span>Jan–${MSHORT[hMon.m]} ${hMon.y} · dealer total across ${stores.length} store${stores.length>1?'s':''}</span></div></div>`;
+
+  // per-store breakdown
+  h+=`<div class="list-title">By store · ${MNAME[hMon.m]} goals & month-over-month</div>`;
+  // order stores by current gross act desc
+  const order=stores.slice().sort((a,b)=>{
+    const ga=lastGross(recs,a),gb=lastGross(recs,b);return gb-ga;});
+  order.forEach(door=>{
+    const ss=storeSeries(recs,months,door);
+    const c=ss[hi]||new Array(9).fill(0),p=lo>=0?ss[lo]:null;
+    let rowsH='';
+    METRICS.forEach((m,k)=>{
+      rowsH+=`<tr><td class="nm">${esc(m.name)}</td><td class="goal"${m.mag?' style="color:var(--magenta)"':''}>${fmt(c[k]||0)}</td><td class="d">${deltaHTML(c[k]||0,p?p[k]:null)}</td></tr>`;
+    });
+    h+=`<div class="store">
+      <div class="shead">
+        <div class="av">${initials(door)}</div>
+        <div class="sinfo"><h3>${esc(title(door))}</h3><p>${esc(DEALER)} · Gross Act trend</p></div>
+        <div class="sright"><div class="n">${fmt(c[0]||0)}</div><div class="l">Gross Act goal</div></div>
+      </div>
+      ${miniSpark(ss.map(v=>v?v[0]:0),months)}
+      <table class="mtbl"><thead><tr><th>Metric</th><th>${MSHORT[hMon.m]} goal</th><th>vs ${prevMonth?MSHORT[prevMonth.m]:'—'}</th></tr></thead>
+      <tbody>${rowsH}</tbody></table>
+    </div>`;
+  });
+
+  const liveTxt=live?'Live from Google Sheet · Goals tab':'Goals snapshot · embedded in page';
+  h+=`<div class="livebar"><span class="pulse"></span><span>${liveTxt} · ${MNAME[hMon.m]} ${hMon.y}</span></div></div>`;
+  root.innerHTML=h;
+  document.getElementById('foot').innerHTML=`Tomorrow Telecom · Monthly Goals (Google Sheet · Goals tab)<br>${esc(DEALER)} · shared ${MSHORT[postMonthIdx]} 27 for ${MNAME[hMon.m]} ${hMon.y}`;
+}
+function lastGross(recs,door){
+  let best=-1,bk=-1;
+  recs.filter(r=>r.door===door).forEach(r=>{if(r.mon.key>bk){bk=r.mon.key;best=r.vals[0]}});
+  return best<0?0:best;
+}
+
+function load(){
+  // 1) render the embedded snapshot instantly — works offline and from a local file://
+  try{render(buildData(EMBEDDED),false)}catch(e){}
+  // 2) try to refresh from the live sheet — works when hosted on https (e.g. GitHub Pages)
+  fetch(GOALS_URL+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.ok?r.text():Promise.reject())
+    .then(t=>{const recs=csvToRecords(parseCSV(t));if(recs.length)render(buildData(recs),true)})
+    .catch(()=>{});
+}
+load();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+</script>
+</body>
+</html>

@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tomorrow Telecom · Store Performance</title>
+<style>
+  :root{--bg:#f1f4f9;--card:#ffffff;--text:#16203a;--muted:#64748b;--border:#e2e8f0;--track:#eef1f6;
+    --red:#dc2626;--amber:#d97706;--green:#16a34a;--blue:#2563eb;--magenta:#e20074;
+    --grad:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#e20074 130%)}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+  .phone{width:100%;max-width:520px;min-height:100vh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow-x:hidden}
+  .appbar{background:var(--grad);color:#fff;padding:16px 18px 14px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;box-shadow:0 2px 10px rgba(16,24,40,.18)}
+  .appbar .back,.appbar .home{background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1rem;cursor:pointer;flex-shrink:0}
+  .appbar .titles{flex:1;min-width:0}
+  .appbar h1{font-size:1.05rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .appbar .sub{font-size:.72rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .screen{flex:1;padding:18px 16px 30px;animation:slidein .22s ease}
+  @keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+  .livebar{display:flex;align-items:center;gap:7px;justify-content:center;font-size:.72rem;color:var(--muted);padding:0 0 8px}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .hero{text-align:center;padding:40px 10px 26px}
+  .hero .logo{font-size:3rem}
+  .hero h2{font-size:1.5rem;margin-top:10px}
+  .hero p{color:var(--muted);font-size:.9rem;margin-top:6px}
+  .role-btn{display:flex;align-items:center;gap:16px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px 18px;margin-top:14px;cursor:pointer;text-align:left;box-shadow:0 1px 4px rgba(16,24,40,.07);transition:transform .12s}
+  .role-btn:active{transform:scale(.98)}
+  .role-btn .ic{font-size:1.9rem;width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .role-btn .ic.emp{background:rgba(37,99,235,.12)}
+  .role-btn .ic.mgr{background:rgba(226,0,116,.1)}
+  .role-btn h3{font-size:1.05rem}
+  .role-btn p{font-size:.78rem;color:var(--muted);margin-top:2px}
+  .role-btn .chev{margin-left:auto;color:var(--muted)}
+  .list-title{font-size:.78rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:14px 2px 10px}
+  .item{display:flex;align-items:center;gap:13px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:15px;padding:14px 15px;margin-bottom:10px;cursor:pointer;text-align:left;box-shadow:0 1px 3px rgba(16,24,40,.06);transition:transform .12s}
+  .item:active{transform:scale(.985)}
+  .item .av{width:42px;height:42px;border-radius:12px;background:rgba(37,99,235,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex-shrink:0}
+  .item .av.all{background:rgba(226,0,116,.1);color:var(--magenta)}
+  .item .info{flex:1;min-width:0}
+  .item h3{font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item p{font-size:.72rem;color:var(--muted);margin-top:1px}
+  .item .right{text-align:right;flex-shrink:0}
+  .item .pct{font-weight:700;font-size:.95rem}
+  .item .rsub{font-size:.7rem;color:var(--muted)}
+  /* brief / attack board */
+  .brief{margin-bottom:14px}
+  .bitem{display:flex;gap:11px;align-items:flex-start;border-radius:14px;padding:12px 30px 12px 14px;margin-bottom:8px;font-size:.84rem;line-height:1.45;box-shadow:0 1px 3px rgba(16,24,40,.06);animation:slidein .25s ease;position:relative;touch-action:pan-y;transition:transform .22s ease,opacity .22s ease}
+  .bitem.gone{transform:translateX(110%);opacity:0}
+  .bx{position:absolute;top:5px;right:5px;border:none;background:transparent;color:inherit;opacity:.4;font-size:.95rem;cursor:pointer;padding:5px 7px;line-height:1}
+  .bx:hover{opacity:.9}
+  .bitem .bic{font-size:1.05rem;flex-shrink:0;margin-top:1px}
+  .bitem b{font-weight:700}
+  .bitem.crit{background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+  .bitem.warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
+  .bitem.win{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
+  .bitem.party{background:linear-gradient(135deg,#f0fdf4,#ecfeff);border:2px solid #34d399;color:#065f46;font-weight:600}
+  .bitem.zero{background:#3b0000;border:2px solid #dc2626;color:#fca5a5;font-weight:600;animation:zeropulse 1.6s ease-in-out infinite}
+  @keyframes zeropulse{0%,100%{border-color:#dc2626;box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{border-color:#f87171;box-shadow:0 0 0 7px rgba(220,38,38,0)}}
+  .brief-head{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.74rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px;position:sticky;top:66px;z-index:9;background:var(--bg);padding:6px 2px;}
+  .brief-head .clock{color:var(--text);font-weight:700;text-transform:none;letter-spacing:0;font-size:.82rem}
+  .sumgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
+  .sum{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:10px 11px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .sum .lab{font-size:.62rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+  .sum .val{font-size:1.15rem;font-weight:700;margin:2px 0 1px}
+  .sum .sub{font-size:.66rem;color:var(--muted)}
+  .det-head{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .det-head .row1{display:flex;justify-content:space-between;align-items:center}
+  .det-head h2{font-size:1.2rem}
+  .badge{font-size:.62rem;font-weight:700;letter-spacing:.7px;padding:4px 10px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
+  .badge.critical{background:rgba(220,38,38,.1);color:var(--red)}
+  .badge.high{background:rgba(217,119,6,.1);color:var(--amber)}
+  .badge.on-pace{background:rgba(22,163,74,.1);color:var(--green)}
+  .badge.q{background:rgba(37,99,235,.1);color:var(--blue)}
+  .badge.qbad{background:rgba(220,38,38,.1);color:var(--red)}
+  .badge.qtop{background:rgba(22,163,74,.1);color:var(--green)}
+  .det-head .who{font-size:.76rem;color:var(--muted);margin-top:4px}
+  .bigpct{display:flex;align-items:baseline;gap:8px;margin-top:12px}
+  .bigpct .n{font-size:2.2rem;font-weight:800;line-height:1}
+  .bigpct .d{font-size:.78rem;color:var(--muted)}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px 16px;margin-bottom:13px;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+  .panel h3{font-size:.72rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .met{margin-bottom:13px}
+  .met:last-child{margin-bottom:0}
+  .met .top{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:5px}
+  .met .nm{font-weight:600}
+  .met .nums{color:var(--muted)}
+  .met .nums b{color:var(--text)}
+  .met .pc{font-weight:700;margin-left:8px}
+  .bar{height:8px;background:var(--track);border-radius:6px;overflow:hidden}
+  .fill{height:100%;border-radius:6px;transition:width .7s ease}
+  .met .foot{display:flex;gap:14px;font-size:.7rem;color:var(--muted);margin-top:4px}
+  .statline{display:flex;justify-content:space-between;font-size:.82rem;padding:7px 0;border-bottom:1px solid var(--track);gap:10px}
+  .statline:last-child{border-bottom:none}
+  .statline span{color:var(--muted)}
+  .statline b{font-weight:700;text-align:right}
+  /* ELB */
+  .elb-top{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .elb-rank{font-size:1.9rem;font-weight:800;line-height:1}
+  .elb-meta{font-size:.74rem;color:var(--muted);line-height:1.5}
+  .chg{font-weight:700;font-size:.8rem}
+  .chg.up{color:var(--green)} .chg.dn{color:var(--red)} .chg.flat{color:var(--muted)}
+  .cat{display:flex;align-items:center;gap:8px;font-size:.8rem;padding:6px 0;border-bottom:1px solid var(--track)}
+  .cat:last-child{border-bottom:none}
+  .cat .cn{flex:1;min-width:0}
+  .cat .w{font-size:.64rem;background:var(--track);color:var(--muted);border-radius:10px;padding:2px 7px;flex-shrink:0}
+  .cat .cr{color:var(--muted);font-size:.7rem;width:54px;text-align:right;flex-shrink:0}
+  .cat .cs{font-weight:700;width:58px;text-align:right;flex-shrink:0}
+  .lb-row{display:flex;align-items:center;gap:10px;font-size:.82rem;padding:7px 0;border-bottom:1px solid var(--track)}
+  .lb-row:last-child{border-bottom:none}
+  .lb-row .nm{flex:1;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lb-row .rk{font-weight:700;width:58px;text-align:right}
+  .lb-row .ch{width:64px;text-align:right}
+  .err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:12px;padding:12px;font-size:.82rem;text-align:center;margin-bottom:12px}
+  #loading{text-align:center;color:var(--muted);padding:80px 20px;font-size:.95rem}
+  footer{text-align:center;font-size:.68rem;color:var(--muted);padding:0 0 22px}
+  /* confetti */
+  .cf{position:fixed;top:-12px;width:9px;height:14px;z-index:99;pointer-events:none;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}
+  /* mobile today-table: no forced min-width, tighter cells */
+  .tday-tbl{width:100%;border-collapse:collapse;font-size:.74rem}
+  .tday-tbl th,.tday-tbl td{padding:5px 5px}
+  .tday-tbl th:first-child,.tday-tbl td:first-child{padding-left:4px}
+  .tday-tbl .conv-col{border-left:1px solid var(--border);text-align:center;padding:4px 5px}
+  .tday-tbl .cv-main{font-weight:700;font-size:.76rem}
+  .tday-tbl .cv-q{font-size:.56rem;color:var(--muted);font-weight:400}
+  .tday-tbl .cv-arr{font-size:.62rem;font-weight:700;white-space:nowrap}
+  @media(max-width:460px){
+    .tday-tbl{font-size:.64rem}
+    .tday-tbl th,.tday-tbl td{padding:3px 2px}
+    .tday-tbl th:first-child,.tday-tbl td:first-child{padding-left:3px}
+    .tday-tbl .conv-col{padding:2px 3px}
+    .tday-tbl .cv-main{font-size:.66rem}
+    .tday-tbl .cv-q{font-size:.52rem}
+    .tday-tbl .cv-arr{font-size:.56rem}
+  }
+  @media(max-width:360px){
+    .tday-tbl{font-size:.6rem}
+    .tday-tbl th,.tday-tbl td{padding:3px 1px}
+    .tday-tbl .cv-main{font-size:.62rem}
+    .tday-tbl .cv-arr{font-size:.52rem}
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="appbar" id="appbar" style="display:none">
+    <button class="back" id="btnBack">←</button>
+    <div class="titles"><h1 id="barTitle"></h1><div class="sub" id="barSub"></div></div>
+    <button class="home" id="btnHome" title="Start over">⌂</button>
+  </div>
+  <div id="root"><div id="loading">Loading live data from Google Sheet…</div></div>
+  <footer id="foot"></footer>
+</div>
+<script>
+const SHEET_ID='1ztd-eO1eXg4sO6zwoLNPC8T833ffXWvu2PrZsU5kSzM', GID='593325688';
+const U=n=>`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&`+n;
+const MAIN_URL=U('gid='+GID), DAILY_URL=U('sheet='+encodeURIComponent('Daily Perf Data')),
+      MIM_URL=U('sheet='+encodeURIComponent('MiM DAL')), ELB_URL=U('sheet='+encodeURIComponent('ELB Ranks'));
+const REFRESH_MS=10*60*1000, OPEN_HOUR=10;
+const NAMES=['New All','New Voice','HINT','BTS','MAGENTA'];
+const DEALER_OVERRIDES={'MATLOCK':'Sid','I-20':'Sid','BELTLINE':'Bader Joudeh','MOTLEY':'Bader Joudeh','BROADWAY':'Bader Joudeh','FRONTAGE':'Bader Joudeh'};
+const ACCOUNTS={
+  'FERGUSON':'BBC Wireless LLC','SAMUEL':'BBC Wireless LLC','WESTERN CENTER':'BBC Wireless LLC','ROSEDALE':'BBC Wireless LLC','BEACH WESTERN':'BBC Wireless LLC','HALTOM':'BBC Wireless LLC','ROUND GROVE':'BBC Wireless LLC',
+  'NORTH MAIN':'Gig Enterprise LLC','SH-121':'Gig Enterprise LLC',
+  'JACKSBORO':'Jacksboro Telecom, LLC','MIDWESTERN':'Jacksboro Telecom, LLC','SOUTHWEST':'Jacksboro Telecom, LLC',
+  'LEWISVILLE':'Simple Solution Enterprise LLC',
+  '6TH':'MBT Communication LLC','WEST PIONEER':'MBT Communication LLC','GREEN OAKS':'MBT Communication LLC','MATLOCK':'MBT Communication LLC','I-20':'MBT Communication LLC','FRANKFORD':'MBT Communication LLC','MONTFORT':'MBT Communication LLC','HARRY HINES':'MBT Communication LLC',
+  'BELTLINE':'Ready to Be Picked, Inc.','MOTLEY':'Ready to Be Picked, Inc.','BROADWAY':'Ready to Be Picked, Inc.','FRONTAGE':'Ready to Be Picked, Inc.',
+  'CAMP BOWIE':'Simple Solution Enterprise LLC','SYCAMORE':'Simple Solution Enterprise LLC',
+  'DECATUR':'SMART 5G COMMUNICATION LLC','DENTON':'SMART 5G COMMUNICATION LLC'
+};
+const acctOf=st=>ACCOUNTS[st]||'';
+function acctsOf(list){return [...new Set(list.map(s=>acctOf(s.store)).filter(Boolean))]}
+const MKT_ABBR={'Express North Dallas':'N Dallas','Express South Dallas':'S Dallas','Express Fort Worth/West Texas':'FW / W TX'};
+const ELB_CATS=[['Prepaid Phone Acts %',20,17,18],['BTS %',5,19,20],['HSI %',10,21,22],['MIM (Magenta)',20,23,24],['Feature $',10,25,26],['ACT Retention (95d)',10,27,28],['Feature Retention (95d)',10,29,30],['Flagged Activations',10,31,32],['CSAT',5,33,34]];
+let model=null,daily=[],mim=null,elb=null;
+// Read dealer lock from URL param (?dealer=NAME)
+const URL_DEALER=decodeURIComponent((new URLSearchParams(window.location.search).get('dealer')||'').trim())||null;
+const URL_VIEW=(new URLSearchParams(window.location.search).get('view')||'').toLowerCase();
+let nav={screen:URL_VIEW==='dm'?'dm':'role',role:URL_VIEW==='dm'?'manager':null,dealer:URL_DEALER,store:null,prevScreen:null};
+
+/* ---------- parsing ---------- */
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else{
+      if(ch==='"')q=true;
+      else if(ch===','){row.push(cur);cur=''}
+      else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=''}
+      else if(ch!=='\r')cur+=ch;
+    }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+const num=s=>parseInt(String(s).replace(/[,$\s]/g,''),10)||0;
+const pf=s=>parseFloat(String(s).replace(/[%$,\s]/g,''))||0;
+function buildModel(rows){
+  const meta={asOf:(rows[0]&&rows[0][19])||'',reportDate:rows[1][0],eom:rows[1][1],daysLeft:rows[1][2],
+    paceFrac:(pf(rows[1][3])||40)/100};
+  const stores=[];
+  for(let i=3;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[0]||!r[3])break;
+    const goal=r.slice(6,11).map(num),mtd=r.slice(11,16).map(num),today=r.slice(16,21).map(num);
+    const vari=r.slice(26,31).map(num),rem=r.slice(36,41).map(num);
+    const pace=goal.map((g,j)=>{const t=Math.round(g*meta.paceFrac);return t>0?mtd[j]/t*100:0});
+    const km=String(r[4]).match(/\(S\)\s*(.+)$/);
+    stores.push({market:r[0].trim(),rdm:r[1].trim(),dealer:DEALER_OVERRIDES[r[3].trim()]||r[2].trim(),
+      store:r[3].trim(),idKey:km?km[1].trim():r[3].trim(),goal,mtd,today,vari,rem,pace,
+      qpayT:r[41],convT:r[42],qpayM:r[43],convM:r[44],featT:r[45],featM:r[46],topFeat:(r[51]||'').trim()});
+  }
+  return {meta,stores};
+}
+function buildDaily(rows){
+  const recs=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[0])continue;
+    if(!r[1]&&!r[2])continue;
+    const km=String(r[2]).match(/\(S\)\s*(.+)$/);
+    recs.push({date:r[0].trim(),key:km?km[1].trim():null,
+      vals:{0:num(r[5]),1:num(r[6]),2:num(r[29]),3:num(r[26])}});
+  }
+  return recs;
+}
+function buildMim(rows){
+  const asOf=(rows[0]&&rows[0][2])||'';
+  const byStore={};
+  for(let i=2;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[2]||!r[3])continue;
+    byStore[r[2].trim()]={bans:num(r[5]),lines:num(r[6]),elig:num(r[8]),target:num(r[10])};
+  }
+  return {asOf,byStore};
+}
+function buildElb(rows){
+  const asOf=(rows[1]&&rows[1][12])||'';
+  const histDates=rows[2]?rows[2].slice(6,11).map(x=>x.trim()):[];
+  const byStore={};
+  for(let i=3;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[4])continue;
+    const cats=ELB_CATS.map(c=>({name:c[0],weight:c[1],rank:num(r[c[2]]),score:(r[c[3]]||'').trim()}));
+    byStore[r[4].trim()]={hist:r.slice(6,11).map(num),rank:num(r[13]),score:(r[14]||'').trim(),
+      quintile:(r[15]||'').trim(),cats};
+  }
+  return {asOf,histDates,byStore};
+}
+function parseMDY(s){const p=s.split('/');return new Date(+p[2],+p[0]-1,+p[1])}
+const colorFor=p=>p>=100?'var(--green)':p>=70?'var(--amber)':'var(--red)';
+const hexFor=p=>p>=100?'#16a34a':p>=70?'#d97706':'#dc2626';
+const badgeFor=p=>p>=100?['on-pace','On Pace']:p>=70?['high','Needs Push']:['critical','Critical'];
+const sign=n=>n>0?'+'+n:''+n;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const title=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
+const initials=s=>s.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+function hoursOpen(){const n=new Date();return Math.max(0,(n-new Date(n.getFullYear(),n.getMonth(),n.getDate(),OPEN_HOUR))/36e5)}
+const dayKey=()=>new Date().toDateString();
+
+/* ---------- missions (memory + celebration) ---------- */
+function loadMissions(){try{const m=JSON.parse(localStorage.getItem('umk_missions')||'{}');return m.day===dayKey()?m:{day:dayKey(),items:{}}}catch(e){return {day:dayKey(),items:{}}}}
+function saveMissions(m){try{localStorage.setItem('umk_missions',JSON.stringify(m))}catch(e){}}
+let missions=loadMissions();
+function trackMission(id,text){
+  if(!missions.items[id])missions.items[id]={text,done:false,celebrated:false};
+  else missions.items[id].text=text;
+}
+function completeMission(id,winText){
+  const it=missions.items[id];
+  if(it&&!it.done){it.done=true;it.winText=winText}
+}
+/* dismissals: hidden for 2h after swipe/X — they come back if still unresolved */
+const DISMISS_MS=2*60*60*1000;
+function loadDismissed(){try{return JSON.parse(localStorage.getItem('umk_dismiss')||'{}')}catch(e){return {}}}
+let dismissed=loadDismissed();
+function isDismissed(id){return dismissed[id]&&(Date.now()-dismissed[id])<DISMISS_MS}
+function dismissItem(id){
+  dismissed[id]=Date.now();
+  Object.keys(dismissed).forEach(k=>{if(Date.now()-dismissed[k]>DISMISS_MS)delete dismissed[k]});
+  try{localStorage.setItem('umk_dismiss',JSON.stringify(dismissed))}catch(e){}
+}
+let confettiPending=false;
+function fireConfetti(){
+  const colors=['#e20074','#2563eb','#16a34a','#f59e0b','#a78bfa','#ef4444'];
+  for(let i=0;i<90;i++){
+    const d=document.createElement('div');d.className='cf';
+    d.style.left=Math.random()*100+'vw';
+    d.style.background=colors[i%colors.length];
+    d.style.animationDuration=(2+Math.random()*2)+'s';
+    d.style.animationDelay=(Math.random()*0.8)+'s';
+    d.style.borderRadius=Math.random()>.5?'50%':'2px';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),5000);
+  }
+}
+
+/* ---------- brief engine ---------- */
+function storeBrief(s){
+  const items=[],hrs=hoursOpen(),hr=Math.floor(hrs),dl=Math.max(+model.meta.daysLeft,1);
+  const convT=pf(s.convT),qpayT=num(s.qpayT),nm=title(s.store);
+  // conversion today
+  if(hrs>=2&&qpayT>=5){
+    const id=s.store+'|conv';
+    if(convT<100){
+      const lvl=convT<50?'crit':'warn';
+      trackMission(id,`get ${nm} conversion over 100%`);
+      const sales=Math.round(convT*qpayT/100);
+      items.push({lvl,ic:lvl==='crit'?'🚨':'⚠️',store:s.store,id,
+        t:`<b>${nm} — conversion ${convT.toFixed(0)}% on ${qpayT} QPAYs, ${hr}h since open.</b> ${qpayT-sales} walk-ins left without buying. Every payment is a pitch: upgrades, BTS, accessories. Goal is 100%+.`});
+    }else{
+      completeMission(id,`${nm} pushed conversion to ${convT.toFixed(0)}% — over 100%! That's how it's done. 🏆`);
+      items.push({lvl:'win',ic:'🔥',store:s.store,id:id+'win',t:`<b>${nm} converting at ${convT.toFixed(0)}% today</b> (${qpayT} QPAYs) — above goal. Keep stacking.`});
+    }
+  }
+  // nothing sold yet
+  if(hrs>=3&&s.today.every(v=>!v)&&qpayT>0){
+    const id=s.store+'|zero';
+    trackMission(id,`${nm}: get on the board today`);
+    items.push({lvl:'warn',ic:'🕐',store:s.store,id,t:`<b>${nm} — ${qpayT} customers in, zero sales logged, ${hr}h into the day.</b> First sale sets the tone. Attack the next walk-in.`});
+  }else if(s.today.some(v=>v>0)){
+    completeMission(s.store+'|zero',`${nm} is on the board today (+${s.today.reduce((a,b)=>a+b,0)}) — momentum started! 🎉`);
+  }
+  // pace gap (worst metric)
+  let wi=-1,wv=0;
+  s.vari.forEach((v,i)=>{if(v<wv){wv=v;wi=i}});
+  if(wi>=0){
+    const id=s.store+'|pace'+wi;
+    trackMission(id,`${nm}: close the ${NAMES[wi]} pace gap`);
+    const need=Math.ceil(s.rem[wi]/dl);
+    const lvl=s.pace[wi]<70?'crit':'warn';
+    items.push({lvl,ic:lvl==='crit'?'🚨':'📉',store:s.store,id,
+      t:`<b>${nm} — ${NAMES[wi]} is ${-wv} behind pace</b> (${s.pace[wi].toFixed(0)}% on-target). ${s.rem[wi]} to go in ${dl} days = ${need}/day. Close ${Math.min(-wv,need)} today to stop the bleed.`});
+  }
+  s.vari.forEach((v,i)=>{if(v>=0)completeMission(s.store+'|pace'+i,`${title(s.store)} is back ON PACE for ${NAMES[i]} (${sign(v)})! Gap closed. 🎉`)});
+  // MiM
+  if(mim){
+    const x=mim.byStore[s.store];
+    if(x&&x.target>0){
+      const pct=x.lines/x.target*100,id=s.store+'|mim';
+      if(pct<40){
+        trackMission(id,`${nm}: lift MiM over 40%`);
+        items.push({lvl:pct<20?'crit':'warn',ic:'🧲',store:s.store,id,
+          t:`<b>${nm} — MiM at ${x.lines}/${x.target} (${pct.toFixed(0)}%).</b> ${Math.max(x.elig-x.bans,0)} eligible BANs are sitting unconverted. Pitch Magenta on every eligible account today.`});
+      }else completeMission(id,`${title(s.store)} MiM is over 40% of target (${pct.toFixed(0)}%) — Magenta machine! 🧲🎉`);
+    }
+  }
+  // ELB
+  if(elb){
+    const e=elb.byStore[s.store];
+    if(e){
+      const h=e.hist.filter(x=>x>0);
+      if(h.length>=2){
+        const d=h[h.length-1]-h[h.length-2];
+        if(d<=-300)items.push({lvl:'win',ic:'🚀',store:s.store,id:s.store+'|elbup',t:`<b>${nm} jumped ${-d} spots on the ELB</b> — now #${e.rank} nationally (${esc(e.quintile)}). Momentum is real.`});
+        else if(d>=300)items.push({lvl:'warn',ic:'📉',store:s.store,id:s.store+'|elbdn',t:`<b>${nm} slipped ${d} spots on the ELB</b> to #${e.rank} (${esc(e.quintile)}). Check the category drags below and pick one to fix today.`});
+      }
+      if(/bottom/i.test(e.quintile))items.push({lvl:'crit',ic:'🆘',store:s.store,id:s.store+'|elbbottom',t:`<b>${nm} is in the ELB Bottom 20% nationally (#${e.rank}).</b> This is the hole to climb out of — every category point counts.`});
+      e.cats.forEach(c=>{
+        if(c.weight>=10&&pf(c.score)===0&&!/csat/i.test(c.name))
+          items.push({lvl:'crit',ic:'🎯',store:s.store,id:s.store+'|cat'+c.name,t:`<b>${nm} — ${esc(c.name)} is at 0%</b> and it's worth ${c.weight}% of the ELB score. One sale here moves the whole rank.`});
+      });
+    }
+  }
+  // Zero MTD — darkest flag, escalates with days passed
+  const daysIn=Math.round(model.meta.paceFrac*parseMDY(model.meta.eom).getDate());
+  NAMES.forEach((metName,i)=>{
+    if(s.goal[i]>0&&s.mtd[i]===0){
+      const id=s.store+'|zeromtd'+i;
+      const urgency=daysIn>=10?'🚨🚨':'🚨';
+      items.push({lvl:'zero',ic:urgency,store:s.store,id,
+        t:`<b>${nm} — ZERO ${metName} after ${daysIn} day${daysIn!==1?'s':''} this month.</b> Goal is ${s.goal[i]}. Every day at zero digs a deeper hole. This store needs immediate attention right now.`});
+    }
+  });
+
+  return items;
+}
+function briefFor(list){
+  let items=[];
+  list.forEach(s=>{items=items.concat(storeBrief(s))});
+  // aggregate conversion for multi-store views
+  if(list.length>1){
+    const hrs=hoursOpen();
+    let qp=0,sales=0;
+    list.forEach(s=>{const q=num(s.qpayT);qp+=q;sales+=Math.round(pf(s.convT)*q/100)});
+    if(hrs>=2&&qp>=10){
+      const cv=sales/qp*100;
+      if(cv<100)items.unshift({lvl:cv<50?'crit':'warn',ic:'🧮',store:'__agg__',id:'__agg__|conv',
+        t:`<b>Team conversion is ${cv.toFixed(0)}% today</b> — ${sales} sales on ${qp} QPAYs, ${Math.floor(hrs)}h since open. ${qp-sales} customers walked without buying. Goal: 100%+.`});
+      else items.unshift({lvl:'win',ic:'🔥',store:'__agg__',id:'__agg__|convwin',t:`<b>Team converting at ${cv.toFixed(0)}% today</b> (${sales}/${qp} QPAYs) — above goal across the board.`});
+    }
+  }
+  // check red flags BEFORE building any celebrations
+  const hasRedFlag=items.some(i=>i.lvl==='zero');
+  // celebrations only when no red flags exist
+  const wins=[];
+  if(!hasRedFlag){
+    Object.keys(missions.items).forEach(id=>{
+      const it=missions.items[id];
+      const st=id.split('|')[0];
+      const inScope=st==='__agg__'||list.some(s=>s.store===st);
+      if(it.done&&inScope){
+        wins.push({lvl:'party',ic:'🎉',id:'party|'+id,t:`<b>MISSION COMPLETE:</b> ${esc(it.winText||it.text)}`});
+        if(!it.celebrated){it.celebrated=true;confettiPending=true}
+      }
+    });
+  } else {
+    // still mark as celebrated so they don't queue up for later
+    Object.keys(missions.items).forEach(id=>{
+      const it=missions.items[id];
+      if(it.done&&!it.celebrated)it.celebrated=true;
+    });
+  }
+  saveMissions(missions);
+  const order={party:0,zero:1,crit:2,warn:3,win:4};
+  items=wins.concat(items.sort((a,b)=>(order[a.lvl]??5)-(order[b.lvl]??5)));
+  return items.filter(i=>!isDismissed(i.id)).slice(0,9);
+}
+function briefHTML(list){
+  const items=briefFor(list);
+  if(!items.length)return '';
+  const hr=Math.floor(hoursOpen());
+  let h=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock openClock"></span></div>`;
+  items.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it — hide for now">✕</button></div>`});
+  return h+'</div>';
+}
+function attachBriefHandlers(){
+  document.querySelectorAll('.bitem').forEach(el=>{
+    const id=el.dataset.bid;
+    if(!id)return;
+    const remove=()=>{el.classList.add('gone');setTimeout(()=>{dismissItem(id);el.remove()},220)};
+    el.querySelector('.bx').addEventListener('click',e=>{e.stopPropagation();remove()});
+    let sx=null,dx=0;
+    el.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dx=0;el.style.transition='none'},{passive:true});
+    el.addEventListener('touchmove',e=>{
+      if(sx===null)return;
+      dx=e.touches[0].clientX-sx;
+      el.style.transform=`translateX(${dx}px)`;
+      el.style.opacity=String(Math.max(1-Math.abs(dx)/240,.3));
+    },{passive:true});
+    el.addEventListener('touchend',()=>{
+      el.style.transition='';
+      if(Math.abs(dx)>80){
+        el.style.transform=`translateX(${dx>0?'110%':'-110%'})`;el.style.opacity='0';
+        setTimeout(()=>{dismissItem(id);el.remove()},220);
+      }else{el.style.transform='';el.style.opacity=''}
+      sx=null;
+    });
+  });
+}
+
+/* ---------- series + spark ---------- */
+function seriesFor(subset,m){
+  const meta=model.meta;
+  const start=parseMDY(meta.reportDate);start.setDate(1);
+  const nDays=parseMDY(meta.eom).getDate();
+  const goalTotal=subset.reduce((t,s)=>t+s.goal[m],0);
+  const mtd=subset.reduce((t,s)=>t+s.mtd[m],0);
+  const goalLine=[];for(let i=0;i<nDays;i++)goalLine.push(goalTotal*(i+1)/nDays);
+  const keys=new Set(subset.map(s=>s.idKey));
+  const dayMap={};
+  daily.forEach(r=>{if(r.key&&keys.has(r.key))dayMap[r.date]=(dayMap[r.date]||0)+r.vals[m]});
+  const idxOf=dt=>Math.round((parseMDY(dt)-start)/864e5);
+  const dates=Object.keys(dayMap).filter(d=>{const i=idxOf(d);return i>=0&&i<nDays}).sort((a,b)=>parseMDY(a)-parseMDY(b));
+  const cum=new Array(nDays).fill(null);
+  if(dates.length){
+    let run=mtd-dates.reduce((t,d)=>t+dayMap[d],0);
+    const f=idxOf(dates[0]);if(f-1>=0)cum[f-1]=run;
+    dates.forEach(dt=>{run+=dayMap[dt];cum[idxOf(dt)]=run});
+  }
+  const todayIdx=parseMDY(meta.reportDate).getDate()-1;
+  return {nDays,goalTotal,mtd,goalLine,cum,todayIdx,paceTarget:goalLine[todayIdx]};
+}
+function sparkSVG(se,h=120){
+  const W=480,H=h,L=8,R=8,T=12,B=8,pw=W-L-R,ph=H-T-B;
+  const yMax=Math.max(se.goalTotal,...se.cum.filter(v=>v!=null),1)*1.08;
+  const X=i=>L+pw*(i+.5)/se.nDays, Y=v=>T+ph*(1-v/yMax);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px" xmlns="http://www.w3.org/2000/svg">`;
+  s+=`<line x1="${X(se.todayIdx)}" y1="${T}" x2="${X(se.todayIdx)}" y2="${T+ph}" stroke="#d97706" stroke-width="1" stroke-dasharray="3 3"/>`;
+  s+=`<polyline fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="5 4" points="${se.goalLine.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
+  const pts=[];se.cum.forEach((v,i)=>{if(v!=null)pts.push([X(i),Y(v),v,i+1])});
+  if(pts.length){
+    const col=se.mtd>=se.paceTarget?'#16a34a':'#dc2626';
+    s+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+    pts.forEach(p=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="${col}"><title>Day ${p[3]}: ${p[2]} cumulative</title></circle>`});
+  }
+  return s+'</svg>';
+}
+function rankSpark(hist,dates,h=90){
+  const W=480,H=h,L=10,R=10,T=14,B=16,pw=W-L-R,ph=H-T-B;
+  const vals=hist.filter(v=>v>0);
+  if(vals.length<2)return '';
+  const mn=Math.min(...vals),mx=Math.max(...vals),span=Math.max(mx-mn,1);
+  const X=i=>L+pw*i/(hist.length-1), Y=v=>T+ph*((v-mn)/span); // lower rank = better = higher on chart? invert: lower rank → top
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px" xmlns="http://www.w3.org/2000/svg">`;
+  const pts=[];hist.forEach((v,i)=>{if(v>0)pts.push([X(i),Y(v),v,dates[i]||''])});
+  const improving=pts[pts.length-1][2]<=pts[0][2];
+  const col=improving?'#16a34a':'#dc2626';
+  s+=`<polyline fill="none" stroke="${col}" stroke-width="2.5" points="${pts.map(p=>p[0]+','+p[1]).join(' ')}"/>`;
+  pts.forEach(p=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${col}"><title>${p[3]}: #${p[2].toLocaleString()}</title></circle>
+    <text x="${p[0]}" y="${H-3}" text-anchor="middle" font-size="9" fill="#64748b">${p[3].replace('/2026','')}</text>`});
+  s+=`<text x="${pts[pts.length-1][0]}" y="${pts[pts.length-1][1]-7}" text-anchor="end" font-size="10" font-weight="700" fill="${col}">#${pts[pts.length-1][2].toLocaleString()}</text>`;
+  return s+'</svg>'+`<div style="font-size:.66rem;color:var(--muted);text-align:center">national rank — lower is better (chart: down = better)</div>`;
+}
+
+/* ---------- navigation ---------- */
+function go(patch){Object.assign(nav,patch);renderApp()}
+function backTarget(){
+  if(nav.screen==='detail')return nav.prevScreen==='dm'?{screen:'dm'}:nav.role==='manager'?{screen:'dash'}:{screen:'stores'};
+  if(nav.screen==='dash'||nav.screen==='stores')return URL_DEALER?{screen:'role'}:{screen:'dealer'};
+  if(nav.screen==='dealer')return {screen:'role',role:null,dealer:null};
+  if(nav.screen==='links')return {screen:'role'};
+  if(nav.screen==='dm')return null;
+  return null;
+}
+function dealersList(){
+  const map={};
+  model.stores.forEach(s=>{(map[s.dealer]=map[s.dealer]||[]).push(s)});
+  return Object.keys(map).sort().map(d=>({name:d,stores:map[d]}));
+}
+function storesOf(){
+  if(nav.dealer==='__all__')return model.stores.slice();
+  return model.stores.filter(s=>s.dealer===nav.dealer);
+}
+function pacePct(list,m){
+  const mtd=list.reduce((t,s)=>t+s.mtd[m],0),g=list.reduce((t,s)=>t+s.goal[m],0);
+  return g?mtd/(g*model.meta.paceFrac)*100:0;
+}
+function elbAgg(list){
+  if(!elb)return null;
+  let sum=0,n=0,move=0;
+  list.forEach(s=>{const e=elb.byStore[s.store];if(e){sum+=e.rank;n++;
+    const h=e.hist.filter(x=>x>0);if(h.length>=2)move+=h[h.length-2]-h[h.length-1]}});
+  return n?{avg:Math.round(sum/n),move,n}:null;
+}
+const rankColor=r=>r<=1100?'var(--green)':r<=3300?'var(--amber)':'var(--red)';
+// worst ELB first (highest rank# = worst); no-ELB stores go to the end
+const elbWorstSort=(a,b)=>{const ea=elb&&elb.byStore[a.store],eb2=elb&&elb.byStore[b.store];if(!ea&&!eb2)return b.pace[0]-a.pace[0];if(!ea)return 1;if(!eb2)return -1;return eb2.rank-ea.rank};
+const moveHTML=m=>m>0?`<span class="chg up">▲ ${m.toLocaleString()}</span>`:m<0?`<span class="chg dn">▼ ${(-m).toLocaleString()}</span>`:'<span class="chg flat">—</span>';
+
+/* ---------- screens ---------- */
+function screenRole(){
+  let heroExtra='';
+  if(URL_DEALER&&model){
+    const dStores=model.stores.filter(s=>s.dealer===URL_DEALER);
+    const accts=acctsOf(dStores);
+    heroExtra=`<div style="margin-top:10px;padding:12px 16px;background:rgba(37,99,235,.07);border:1px solid rgba(37,99,235,.15);border-radius:14px;text-align:left">
+      <div style="font-size:.72rem;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px">Sub-Dealer</div>
+      <div style="font-weight:700;font-size:1.05rem">${esc(URL_DEALER)}</div>
+      ${accts.length?`<div style="font-size:.78rem;color:var(--muted);margin-top:3px">${esc(accts.join(' · '))}</div>`:''}
+      <div style="font-size:.72rem;color:var(--muted);margin-top:3px">${dStores.length} store${dStores.length!==1?'s':''}</div>
+    </div>`;
+  }
+  const empDest=URL_DEALER?'stores':'dealer';
+  const mgrDest=URL_DEALER?'dash':'dealer';
+  return `<div class="screen">
+    <div class="hero"><div class="logo">📶</div><h2>Tomorrow Telecom</h2><p>Store performance, live from the field.</p>${heroExtra}</div>
+    <button class="role-btn" onclick="go({screen:'${empDest}',role:'employee'})">
+      <span class="ic emp">👤</span><span><h3>I'm an Employee</h3><p>What should I attack at my store right now?</p></span><span class="chev">›</span></button>
+    <button class="role-btn" onclick="go({screen:'${mgrDest}',role:'manager'})">
+      <span class="ic mgr">📊</span><span><h3>I'm a Manager</h3><p>Dashboard, attack board & ELB for all my stores</p></span><span class="chev">›</span></button>
+    ${!URL_DEALER?`<button class="role-btn" style="margin-top:8px;opacity:.7" onclick="go({screen:'links'})">
+      <span class="ic" style="background:rgba(100,116,139,.1);font-size:1.2rem">🔗</span><span><h3>Sub-Dealer Links</h3><p>Get shareable links for each sub-dealer</p></span><span class="chev">›</span></button>`:''}
+    ${liveBar()}
+  </div>`;
+}
+function screenDealer(){
+  let h=`<div class="screen"><div class="list-title" style="margin-top:0">Select your sub-dealer</div>`;
+  const rightStat=(list)=>{
+    const a=elbAgg(list);
+    if(a)return `<span class="pct" style="color:${rankColor(a.avg)}">#${a.avg.toLocaleString()}</span><div class="rsub">avg ELB ${moveHTML(a.move)}</div>`;
+    const p=pacePct(list,0);
+    return `<span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">on target</div>`;
+  };
+  if(nav.role==='manager'){
+    const p=pacePct(model.stores,0);
+    h+=`<button class="item" onclick="go({screen:'dash',dealer:'__all__'})">
+      <span class="av all">★</span><span class="info"><h3>All Sub-Dealers</h3><p>${model.stores.length} stores · ${p.toFixed(0)}% on target</p></span>
+      <span class="right">${rightStat(model.stores)}</span></button>`;
+  }
+  dealersList().forEach(d=>{
+    const p=pacePct(d.stores,0);
+    const accts=acctsOf(d.stores);
+    h+=`<button class="item" onclick="go({screen:nav.role==='manager'?'dash':'stores',dealer:'${esc(d.name)}'})">
+      <span class="av">${initials(d.name)}</span>
+      <span class="info"><h3>${esc(d.name)}</h3><p>${accts.length?esc(accts.join(' · '))+'<br>':''}${d.stores.length} store${d.stores.length>1?'s':''} · ${p.toFixed(0)}% on target</p></span>
+      <span class="right">${rightStat(d.stores)}</span></button>`;
+  });
+  return h+liveBar()+'</div>';
+}
+function summaryCards(list){
+  let h='<div class="sumgrid">';
+  const a=elbAgg(list);
+  if(a){
+    let best=null;
+    list.forEach(s=>{const e=elb.byStore[s.store];if(e&&(!best||e.rank<best.rank))best={rank:e.rank,store:s.store}});
+    h+=`<div class="sum" style="border-left:3px solid ${rankColor(a.avg).replace('var(--','').includes('green')?'#16a34a':'#2563eb'};grid-column:span ${best?2:1}"><div class="lab">🏆 ELB · the score that matters</div><div class="val" style="color:${rankColor(a.avg)}">#${a.avg.toLocaleString()} <span style="font-size:.8rem">${moveHTML(a.move)}</span></div><div class="sub">avg national rank of ${a.n} store${a.n>1?'s':''}${best?' · best: '+esc(title(best.store))+' #'+best.rank.toLocaleString():''}</div></div>`;
+  }
+  NAMES.forEach((n,i)=>{
+    const mtd=list.reduce((t,s)=>t+s.mtd[i],0),g=list.reduce((t,s)=>t+s.goal[i],0);
+    const p=g?mtd/(g*model.meta.paceFrac)*100:0;
+    h+=`<div class="sum"><div class="lab">${n}</div><div class="val" style="color:${colorFor(p)}">${p.toFixed(0)}%</div><div class="sub">${mtd}/${g} goal</div></div>`;
+  });
+  const tdy=list.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
+  h+=`<div class="sum" style="border-left:3px solid var(--blue)"><div class="lab">Today</div><div class="val" style="color:var(--blue)">+${tdy}</div><div class="sub">all metrics</div></div>`;
+  if(mim){
+    let lines=0,target=0,bans=0,elig=0;
+    list.forEach(s=>{const x=mim.byStore[s.store];if(x){lines+=x.lines;target+=x.target;bans+=x.bans;elig+=x.elig}});
+    if(target>0)h+=`<div class="sum" style="border-left:3px solid var(--magenta)"><div class="lab">MiM Lines</div><div class="val" style="color:var(--magenta)">${(lines/target*100).toFixed(0)}%</div><div class="sub">${lines}/${target} postpaid target</div></div>
+      <div class="sum" style="border-left:3px solid var(--magenta)"><div class="lab">MiM Conv</div><div class="val" style="color:var(--magenta)">${elig?(bans/elig*100).toFixed(0):0}%</div><div class="sub">${bans}/${elig} eligible BANs</div></div>`;
+  }
+  return h+'</div>';
+}
+function storeRow(s){
+  const p=s.pace[0];
+  const e=elb&&elb.byStore[s.store];
+  let right=`<span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">${s.mtd[0]}/${s.goal[0]} New All</div>`;
+  if(e){
+    const h=e.hist.filter(x=>x>0);
+    const d=h.length>=2?h[h.length-2]-h[h.length-1]:0;
+    right=`<span class="pct" style="color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><div class="rsub">ELB ${moveHTML(d)}</div>`;
+  }
+  return `<button class="item" onclick="go({screen:'detail',store:'${esc(s.store)}'})">
+    <span class="av" style="background:${p>=100?'rgba(22,163,74,.1)':p>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};color:${hexFor(p)}">${initials(s.store)}</span>
+    <span class="info"><h3>${esc(title(s.store))}</h3><p>${acctOf(s.store)?esc(acctOf(s.store))+' · ':''}${esc(MKT_ABBR[s.market]||s.market)} · ${p.toFixed(0)}% on target (${s.mtd[0]}/${s.goal[0]})</p></span>
+    <span class="right">${right}</span></button>`;
+}
+function elbLeaderboard(list){
+  if(!elb)return '';
+  const rows=list.map(s=>({s,e:elb.byStore[s.store]})).filter(x=>x.e).sort((a,b)=>a.e.rank-b.e.rank);
+  if(!rows.length)return '';
+  let h=`<div class="panel"><h3>🏆 ELB leaderboard · as of ${esc(elb.asOf)} · national rank of ~5,500 doors</h3>`;
+  rows.forEach(({s,e},i)=>{
+    const hh=e.hist.filter(x=>x>0);
+    const d=hh.length>=2?hh[hh.length-1]-hh[hh.length-2]:0;
+    const ch=d<0?`<span class="chg up">▲ ${-d}</span>`:d>0?`<span class="chg dn">▼ ${d}</span>`:'<span class="chg flat">—</span>';
+    h+=`<div class="lb-row"><span style="width:18px;color:var(--muted)">${i+1}</span><span class="nm">${esc(title(s.store))}</span>
+      <span style="font-size:.68rem;color:var(--muted)">${esc(e.score)}</span>
+      <span class="rk">#${e.rank.toLocaleString()}</span><span class="ch">${ch}</span></div>`;
+  });
+  return h+'</div>';
+}
+function screenDash(){
+  const list=storesOf();
+  const sorted=list.slice().sort(elbWorstSort);
+  const se=seriesFor(list,0);
+  let h=`<div class="screen">${liveBar()}${briefHTML(list)}${elbLeaderboard(list)}${summaryCards(list)}${todayTable(list,'dash')}
+    <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,130)}
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
+      <span>MTD <b style="color:var(--text)">${se.mtd.toLocaleString()}</b></span>
+      <span>pace target <b style="color:var(--text)">${Math.round(se.paceTarget).toLocaleString()}</b></span>
+      <span style="color:${se.mtd>=se.paceTarget?'var(--green)':'var(--red)'}">${sign(Math.round(se.mtd-se.paceTarget))} vs pace</span></div></div>
+    <div class="list-title">Stores · worst first</div>`;
+  sorted.forEach(s=>h+=storeRow(s));
+  return h+'</div>';
+}
+function screenStores(){
+  const sorted=storesOf().slice().sort((a,b)=>a.store.localeCompare(b.store));
+  let h=`<div class="screen"><div class="list-title" style="margin-top:0">Choose your store</div>`;
+  sorted.forEach(s=>h+=storeRow(s));
+  return h+liveBar()+'</div>';
+}
+function catColor(c){
+  if(/csat/i.test(c.name)){const v=pf(c.score);return v>=9.5?'var(--green)':v>=9?'var(--amber)':'var(--red)'}
+  const v=pf(c.score);
+  if(/flagged/i.test(c.name))return v>=80?'var(--green)':v>=50?'var(--amber)':'var(--red)';
+  return v>=100?'var(--green)':v>=70?'var(--amber)':'var(--red)';
+}
+function elbPanel(s){
+  if(!elb)return '';
+  const e=elb.byStore[s.store];
+  if(!e)return '';
+  const h=e.hist.filter(x=>x>0);
+  const d=h.length>=2?h[h.length-1]-h[h.length-2]:0;
+  const ch=d<0?`<span class="chg up">▲ ${-d} vs prev day</span>`:d>0?`<span class="chg dn">▼ ${d} vs prev day</span>`:'<span class="chg flat">no change</span>';
+  const qcls=/top/i.test(e.quintile)?'qtop':/bottom/i.test(e.quintile)?'qbad':'q';
+  let cats='';
+  e.cats.forEach(c=>{
+    cats+=`<div class="cat"><span class="cn">${esc(c.name)}</span><span class="w">${c.weight}%</span>
+      <span class="cr">#${c.rank.toLocaleString()}</span><span class="cs" style="color:${catColor(c)}">${esc(c.score)}</span></div>`;
+  });
+  return `<div class="panel" style="border-left:3px solid var(--blue)"><h3 style="color:var(--blue)">🏆 ELB — Elite Leader Board · as of ${esc(elb.asOf)}</h3>
+    <div class="elb-top">
+      <div><div class="elb-rank">#${e.rank.toLocaleString()}</div><div class="elb-meta">national rank</div></div>
+      <div class="elb-meta">${ch}<br>Overall score <b style="color:var(--text)">${esc(e.score)}</b> · <span class="badge ${qcls}">${esc(e.quintile)}</span></div>
+    </div>
+    ${rankSpark(e.hist,elb.histDates)}
+    <div style="margin-top:10px">${cats}</div>
+  </div>`;
+}
+function mimPanel(s){
+  if(!mim)return '';
+  const x=mim.byStore[s.store];
+  if(!x)return '';
+  const pct=x.target?x.lines/x.target*100:0;
+  const conv=x.elig?x.bans/x.elig*100:0;
+  return `<div class="panel" style="border-left:3px solid var(--magenta)"><h3 style="color:var(--magenta)">MiM — Magenta in Metro · as of ${esc(mim.asOf)}</h3>
+    <div class="met">
+      <div class="top"><span class="nm">Lines vs Postpaid Target</span><span class="nums"><b>${x.lines}</b>/${x.target}<span class="pc" style="color:var(--magenta)">${pct.toFixed(0)}%</span></span></div>
+      <div class="bar"><div class="fill" style="background:var(--magenta);width:${Math.min(pct,100).toFixed(1)}%"></div></div>
+    </div>
+    <div class="statline"><span>MiM BANs / Eligible</span><b>${x.bans} / ${x.elig}</b></div>
+    <div class="statline"><span>Eligible BAN conversion</span><b>${conv.toFixed(1)}%</b></div>
+  </div>`;
+}
+function screenDetail(){
+  const s=model.stores.find(x=>x.store===nav.store);
+  if(!s)return '<div class="screen"><div class="err">Store not found — data may have changed. Go back and re-select.</div></div>';
+  const [cls,lbl]=badgeFor(s.pace[0]);
+  const se=seriesFor([s],0);
+  let mets='';
+  NAMES.forEach((n,i)=>{
+    const p=s.pace[i],col=colorFor(p);
+    mets+=`<div class="met">
+      <div class="top"><span class="nm">${n}</span><span class="nums"><b>${s.mtd[i]}</b>/${s.goal[i]}${s.today[i]?` · <b style="color:var(--blue)">${sign(s.today[i])} today</b>`:''}<span class="pc" style="color:${col}">${p.toFixed(0)}%</span></span></div>
+      <div class="bar"><div class="fill" style="background:${col};width:${Math.min(p,100).toFixed(1)}%"></div></div>
+      <div class="foot"><span>Δ pace ${sign(s.vari[i])}</span><span>${s.rem[i]} to go</span></div>
+    </div>`;
+  });
+  const e=elb&&elb.byStore[s.store];
+  let elbHead='';
+  if(e){
+    const hh=e.hist.filter(x=>x>0);
+    const d=hh.length>=2?hh[hh.length-2]-hh[hh.length-1]:0;
+    elbHead=`<div class="bigpct"><span class="n" style="color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span>
+      <span class="d">ELB national rank ${moveHTML(d)} · ${esc(e.quintile)} · score ${esc(e.score)}</span></div>`;
+  }
+  return `<div class="screen">
+    ${liveBar()}
+    ${briefHTML([s])}
+    <div class="det-head">
+      <div class="row1"><h2>📍 ${esc(title(s.store))}</h2><span class="badge ${cls}">${lbl}</span></div>
+      <div class="who">${acctOf(s.store)?esc(acctOf(s.store))+' · ':''}${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · RDM ${esc(s.rdm)}</div>
+      ${elbHead}
+      <div style="font-size:.78rem;color:var(--muted);margin-top:8px"><b style="color:${colorFor(s.pace[0])}">${s.pace[0].toFixed(0)}%</b> of New All pace target · ${s.mtd[0]}/${s.goal[0]} goal · ${s.rem[0]} to go in ${model.meta.daysLeft} days</div>
+    </div>
+    ${elbPanel(s)}
+    ${todayTable([s],'detail')}
+    <div class="panel"><h3>New All — month trend vs goal pace</h3>${sparkSVG(se,120)}</div>
+    <div class="panel"><h3>Metrics month-to-date</h3>${mets}</div>
+    ${mimPanel(s)}
+  </div>`;
+}
+const fmtAsOf=s=>{if(!s)return'';const m=s.match(/(\d+)\/(\d+)\/(\d+)\s+(\d+):(\d+)/);if(!m)return s;let h=+m[4],mi=m[5],ap=h>=12?'pm':'am';h=h%12||12;return`${m[1]}/${m[2]}/${m[3]} ${h}:${mi}${ap}`};
+function liveBar(){
+  return `<div class="livebar"><span class="pulse"></span><span>Live · sheet as of ${fmtAsOf(model?model.meta.asOf:'')} · refreshes every 10 min</span></div>`;
+}
+function fmtOpenClock(){
+  const now=new Date(),open=new Date(now.getFullYear(),now.getMonth(),now.getDate(),OPEN_HOUR);
+  const secs=Math.floor(Math.max(0,(now-open)/1000));
+  if(secs<=0)return'pre-open';
+  const h=Math.floor(secs/3600),m=Math.floor((secs%3600)/60),s=secs%60;
+  return`· ${h>0?h+'h ':''} ${m}m ${String(s).padStart(2,'0')}s since open (10am)`;
+}
+let openClockInterval=null;
+function startOpenClock(){
+  if(openClockInterval)clearInterval(openClockInterval);
+  const tick=()=>{document.querySelectorAll('.openClock').forEach(el=>el.textContent=fmtOpenClock());};
+  tick();
+  openClockInterval=setInterval(tick,1000);
+}
+function screenLinks(){
+  const base=window.location.origin+window.location.pathname;
+  let h=`<div class="screen"><div class="list-title" style="margin-top:0">Sub-Dealer Links</div>
+    <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px">Each link opens a version of the app locked to that sub-dealer. Share directly with your reps.</p>`;
+  dealersList().forEach(d=>{
+    const url=base+'?dealer='+encodeURIComponent(d.name);
+    const accts=acctsOf(d.stores);
+    h+=`<div class="item" style="flex-direction:column;align-items:flex-start;gap:6px;cursor:default">
+      <div style="display:flex;align-items:center;gap:10px;width:100%">
+        <span class="av">${initials(d.name)}</span>
+        <span class="info"><h3>${esc(d.name)}</h3><p>${accts.length?esc(accts.join(' · ')):''}${accts.length?' · ':''} ${d.stores.length} store${d.stores.length!==1?'s':''}</p></span>
+      </div>
+      <div style="display:flex;gap:8px;width:100%;align-items:center">
+        <input readonly value="${esc(url)}" onclick="this.select()" style="flex:1;font-size:.68rem;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--track);color:var(--muted);min-width:0">
+        <button onclick="navigator.clipboard.writeText('${esc(url)}').then(()=>{this.textContent='✓ Copied';setTimeout(()=>this.textContent='Copy',1500)})" style="font-size:.72rem;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;flex-shrink:0">Copy</button>
+      </div>
+    </div>`;
+  });
+  return h+'</div>';
+}
+
+/* ---------- Today's performance table ---------- */
+function todayTable(list,prevScreen){
+  const sorted=list.slice().sort((a,b)=>b.today.reduce((s,v)=>s+v,0)-a.today.reduce((s,v)=>s+v,0));
+  const colHeaders=['New All','Voice','HINT','BTS'];
+  // pre-compute aggregate conversion for totals row
+  const totalQpayT=list.reduce((s,st)=>s+num(st.qpayT),0);
+  const totalSalesT=list.reduce((s,st)=>s+Math.round(pf(st.convT)*num(st.qpayT)/100),0);
+  const totalQpayM=list.reduce((s,st)=>s+num(st.qpayM),0);
+  const totalSalesM=list.reduce((s,st)=>s+Math.round(pf(st.convM)*num(st.qpayM)/100),0);
+  const aggConvT=totalQpayT>0?totalSalesT/totalQpayT*100:0;
+  const aggConvM=totalQpayM>0?totalSalesM/totalQpayM*100:0;
+  const aggDiff=aggConvT-aggConvM;
+  let h=`<div class="panel"><h3>📅 Today's sales · most active first</h3>
+    <table class="tday-tbl">
+    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
+      <th style="text-align:left">Store</th>`;
+  colHeaders.forEach(n=>h+=`<th style="text-align:center">${n}</th>`);
+  h+=`<th style="text-align:center">Total</th>
+      <th class="conv-col">Conv <span style="font-weight:400;font-size:.58rem">vs MTD</span></th>
+    </tr></thead><tbody>`;
+  sorted.forEach(s=>{
+    const total=s.today.reduce((sum,v)=>sum+v,0);
+    const ct=pf(s.convT),cm=pf(s.convM),qpt=num(s.qpayT);
+    const cdiff=ct-cm;
+    const ccolor=cdiff>=0?'var(--green)':'var(--red)';
+    const convCell=`<div style="display:flex;justify-content:space-between;align-items:center;gap:2px">
+          <span class="cv-main" style="color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'}">${ct.toFixed(0)}%<br><span class="cv-q">${qpt} QPAY</span></span>
+          ${qpt>0?`<span class="cv-arr" style="color:${ccolor}">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
+        </div>`;
+    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
+      <td style="font-weight:600;white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
+    s.today.slice(0,4).forEach(v=>{
+      const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
+      h+=`<td style="text-align:center;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
+    });
+    const rowTotal=s.today.slice(0,4).reduce((sum,v)=>sum+v,0);
+    const tc=rowTotal>0?'var(--green)':'var(--red)';
+    h+=`<td style="text-align:center;font-weight:700;color:${tc}">${rowTotal>0?'+'+rowTotal:'—'}</td>
+        <td class="conv-col" style="line-height:1.2">${convCell}</td></tr>`;
+  });
+  // totals row
+  const tots=[0,1,2,3].map(i=>list.reduce((s,st)=>s+st.today[i],0));
+  const grand=tots.reduce((s,v)=>s+v,0);
+  const aggDiffColor=aggDiff>=0?'var(--green)':'var(--red)';
+  h+=`<tr style="border-top:2px solid var(--border);background:var(--track);font-weight:700"><td>TOTAL</td>`;
+  tots.forEach(v=>h+=`<td style="text-align:center;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
+  h+=`<td style="text-align:center;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td>
+      <td class="conv-col">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:3px">
+          <span class="cv-main" style="color:${aggConvT>=100?'var(--green)':aggConvT>=70?'var(--amber)':'var(--red)'}">${aggConvT.toFixed(0)}%<br><span class="cv-q">${totalQpayT} QPAY</span></span>
+          <span class="cv-arr" style="color:${aggDiffColor}">${aggDiff>=0?'▲':'▼'}${Math.abs(aggDiff).toFixed(1)}%</span>
+        </div>
+      </td></tr>`;
+  h+='</tbody></table>';
+  // conversion footer (MTD context)
+  const clabel=aggDiff>=0?`▲ ${aggDiff.toFixed(1)}% above MTD`:`▼ ${Math.abs(aggDiff).toFixed(1)}% below MTD`;
+  h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">
+    <span style="color:var(--muted)">Conversion today</span>
+    <span style="display:flex;align-items:center;gap:8px">
+      <b>${aggConvT.toFixed(2)}%</b><span style="color:var(--muted)">(${totalQpayT} QPAY)</span>
+      <span style="font-size:.68rem;font-weight:700;color:${aggDiffColor}">${clabel}</span>
+    </span>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px 4px;font-size:.72rem">
+    <span style="color:var(--muted)">Conversion MTD</span>
+    <span><b>${aggConvM.toFixed(2)}%</b> <span style="color:var(--muted)">(${totalQpayM} QPAY)</span></span>
+  </div>`;
+  return h+'</div>';
+}
+
+/* ---------- Today vs ELB expectation (DM only) ----------
+   Maps today's sale types to the ELB categories they move, then finds the lever
+   with the biggest WEIGHTED ELB gap (national rank x the category's % share of the
+   ELB score) so the focus lands where a sale moves the overall rank the most. */
+const TODAY_ELB_MAP=[
+  {idx:[1],cat:'Prepaid Phone Acts %',label:'New Acts'},
+  {idx:[2],cat:'HSI %',label:'HSI (HINT)'},
+  {idx:[3],cat:'BTS %',label:'BTS'}
+];
+const elbFocus=l=>l.weight*l.rank; // weighted ELB gap: worse rank x bigger ELB share = more impact
+function elbExpectTable(list){
+  if(!elb)return '';
+  const rows=[];
+  list.forEach(s=>{
+    const e=elb.byStore[s.store];
+    if(!e)return;
+    const levers=TODAY_ELB_MAP.map(m=>{
+      const c=e.cats.find(x=>x.name===m.cat);
+      const today=m.idx.reduce((t,i)=>t+(s.today[i]||0),0);
+      return{label:m.label,rank:c?c.rank:0,weight:c?c.weight:0,score:c?c.score:'',today};
+    }).filter(l=>l.rank>0);
+    if(!levers.length)return;
+    const drag=levers.slice().sort((a,b)=>elbFocus(b)-elbFocus(a))[0]; // biggest weighted ELB gap
+    rows.push({s,e,drag,totalToday:s.today.reduce((t,v)=>t+v,0),addressed:drag.today>0});
+  });
+  if(!rows.length)return '';
+  rows.sort((a,b)=>(a.addressed-b.addressed)||(elbFocus(b.drag)-elbFocus(a.drag))); // misses first, biggest weighted gap first
+  const hit=rows.filter(r=>r.addressed).length;
+  let h=`<div class="panel"><h3>🎯 Today vs ELB expectation · is today feeding each store's weakest lever?</h3>
+    <table class="tday-tbl">
+    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
+      <th style="text-align:left">Store</th>
+      <th style="text-align:center">ELB</th>
+      <th style="text-align:left">Focus lever (ELB&nbsp;wt)</th>
+      <th class="conv-col">Today on&nbsp;it?</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const e=r.e,s=r.s;
+    const okColor=r.addressed?'var(--green)':'var(--red)';
+    const okTxt=r.addressed?`✓ +${r.drag.today}`:'✗ 0';
+    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${r.totalToday===0?';opacity:.6':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'dm'})">
+      <td style="font-weight:600;white-space:nowrap;max-width:78px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>
+      <td style="text-align:center;line-height:1.15"><span style="font-weight:700;color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><br><span style="font-size:.55rem;color:var(--muted)">${esc(e.quintile)}</span></td>
+      <td style="line-height:1.2"><b>${esc(r.drag.label)}</b> <span style="font-size:.56rem;color:var(--blue);font-weight:700">${r.drag.weight}% ELB</span><br><span style="font-size:.6rem;color:var(--muted)">#${r.drag.rank.toLocaleString()}${r.drag.score?' · '+esc(r.drag.score):''}</span></td>
+      <td class="conv-col" style="font-weight:700;color:${okColor};white-space:nowrap">${okTxt}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">
+      <span style="color:var(--muted)">Feeding their weakest ELB lever today</span>
+      <b style="color:${hit/rows.length>=0.5?'var(--green)':'var(--red)'}">${hit} / ${rows.length} stores</b>
+    </div>
+    <div style="font-size:.63rem;color:var(--muted);padding:3px 6px 0;line-height:1.4">Focus lever = the daily-movable ELB category weighted by its share of the score — New Acts <b>20%</b>, HSI/HINT <b>10%</b>, BTS <b>5%</b> — so the pick is where a sale moves the rank most, not just the lowest raw rank. Magenta/MIM excluded (not real-time). <b>✓</b> = today's sales put points on it; <b style="color:var(--red)">✗</b> = missed.</div>
+  </div>`;
+  return h;
+}
+
+/* ---------- Director Mode (DM) ---------- */
+let dmFilters={market:'',dealer:'',sort:'urgency',q:''};
+function screenDM(){
+  const all=model.stores;
+  const markets=[...new Set(all.map(s=>s.market))].sort();
+  const dealers=[...new Set(all.map(s=>s.dealer))].sort();
+  let list=all.filter(s=>{
+    if(dmFilters.market&&s.market!==dmFilters.market)return false;
+    if(dmFilters.dealer&&s.dealer!==dmFilters.dealer)return false;
+    if(dmFilters.q){const q=dmFilters.q.toLowerCase();if(!s.store.toLowerCase().includes(q)&&!s.dealer.toLowerCase().includes(q)&&!(MKT_ABBR[s.market]||s.market).toLowerCase().includes(q))return false}
+    return true;
+  });
+  if(dmFilters.sort==='urgency')list=list.slice().sort(elbWorstSort);
+  else if(dmFilters.sort==='elb')list=list.slice().sort((a,b)=>{const ea=elb&&elb.byStore[a.store],eb2=elb&&elb.byStore[b.store];return(ea?ea.rank:99999)-(eb2?eb2.rank:99999)});
+  else if(dmFilters.sort==='dealer')list=list.slice().sort((a,b)=>a.dealer.localeCompare(b.dealer)||a.pace[0]-b.pace[0]);
+  else if(dmFilters.sort==='market')list=list.slice().sort((a,b)=>a.market.localeCompare(b.market)||a.pace[0]-b.pace[0]);
+  else if(dmFilters.sort==='store')list=list.slice().sort((a,b)=>a.store.localeCompare(b.store));
+
+  // sub-dealer rollup — scoped to filtered list
+  const dealerMap={};
+  list.forEach(s=>{if(!dealerMap[s.dealer])dealerMap[s.dealer]={stores:[],name:s.dealer};dealerMap[s.dealer].stores.push(s)});
+  const dealerRollup=Object.values(dealerMap).map(d=>{
+    const p=pacePct(d.stores,0),crit=d.stores.filter(s=>s.pace[0]<70).length;
+    const ea=elbAgg(d.stores);
+    const today=d.stores.reduce((t,s)=>t+s.today.reduce((a,b)=>a+b,0),0);
+    return{...d,pace:p,crit,elb:ea,today};
+  }).sort((a,b)=>(b.elb?b.elb.avg:0)-(a.elb?a.elb.avg:0)||a.pace-b.pace);
+
+  const mktOpts=markets.map(m=>`<option value="${esc(m)}"${dmFilters.market===m?'selected':''}>${esc(MKT_ABBR[m]||m)}</option>`).join('');
+  const dlrOpts=dealers.map(d=>`<option value="${esc(d)}"${dmFilters.dealer===d?'selected':''}>${esc(d)}</option>`).join('');
+
+  let h=`<div class="screen">`;
+
+  // filter bar
+  h+=`<div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px">
+    <input placeholder="🔍 Search store / dealer / market…" value="${esc(dmFilters.q)}" oninput="dmFilters.q=this.value;renderApp()" style="flex:2;min-width:150px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.8rem">
+    <select onchange="dmFilters.market=this.value;renderApp()" style="flex:1;min-width:90px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="">All Markets</option>${mktOpts}
+    </select>
+    <select onchange="dmFilters.dealer=this.value;renderApp()" style="flex:1;min-width:100px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="">All Sub-Dealers</option>${dlrOpts}
+    </select>
+    <select onchange="dmFilters.sort=this.value;renderApp()" style="flex:1;min-width:100px;padding:8px 8px;border:1px solid var(--border);border-radius:10px;background:var(--card);font-size:.78rem">
+      <option value="urgency"${dmFilters.sort==='urgency'?'selected':''}>⬆ Urgency</option>
+      <option value="elb"${dmFilters.sort==='elb'?'selected':''}>🏆 ELB Rank</option>
+      <option value="dealer"${dmFilters.sort==='dealer'?'selected':''}>👤 Sub-Dealer</option>
+      <option value="market"${dmFilters.sort==='market'?'selected':''}>🗺 Market</option>
+      <option value="store"${dmFilters.sort==='store'?'selected':''}>🏪 Store Name</option>
+    </select>
+  </div>`;
+
+  // summary cards scoped to filtered list
+  h+=summaryCards(list);
+
+  // who to call right now
+  const callList=dealerRollup.filter(d=>d.elb?d.elb.avg>1100:d.pace<80).slice(0,6);
+  if(callList.length){
+    h+=`<div class="panel" style="border-left:3px solid var(--red)"><h3 style="color:var(--red)">📞 Who to call right now · sorted by urgency</h3>`;
+    callList.forEach(d=>{
+      const worst=d.stores.slice().sort(elbWorstSort)[0];
+      let why='';
+      if(d.crit>0)why=`${d.crit} store${d.crit>1?'s':''} below 70% pace`;
+      else why=`${d.pace.toFixed(0)}% avg on target — needs push`;
+      const elbInfo=d.elb?` · ELB avg #${d.elb.avg.toLocaleString()}`:'';
+      const todayInfo=d.today>0?` · +${d.today} today`:'';
+      h+=`<div class="statline" style="cursor:pointer" onclick="dmFilters.dealer='${esc(d.name)}';renderApp()">
+        <span style="flex:1;min-width:0">
+          <b style="font-size:.88rem">${esc(d.name)}</b>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:1px">${why}${elbInfo}${todayInfo}</div>
+          <div style="font-size:.68rem;color:var(--muted)">Worst: ${esc(title(worst.store))} at ${worst.pace[0].toFixed(0)}% · ${worst.mtd[0]}/${worst.goal[0]} New All</div>
+        </span>
+        <span style="color:${colorFor(d.pace)};font-weight:700;font-size:.95rem">${d.pace.toFixed(0)}%</span>
+      </div>`;
+    });
+    h+='</div>';
+  }
+
+  // attack board across visible stores (top items only)
+  const allBrief=briefFor(list).slice(0,8);
+  if(allBrief.length){
+    h+=liveBar();
+    h+=`<div class="brief"><div class="brief-head">⚡ Attack board <span class="clock openClock"></span></div>`;
+    allBrief.forEach(i=>{h+=`<div class="bitem ${i.lvl}" data-bid="${esc(i.id||'')}"><span class="bic">${i.ic}</span><span>${i.t}</span><button class="bx" title="Got it">✕</button></div>`});
+    h+='</div>';
+  }
+
+  // sub-dealer comparison table (only when no dealer filter)
+  if(!dmFilters.dealer){
+    h+=`<div class="panel"><h3>📊 Sub-dealer snapshot · tap to drill down</h3>`;
+    dealerRollup.forEach(d=>{
+      const ea=d.elb;
+      const elbTxt=ea?`ELB #${ea.avg.toLocaleString()} `+moveHTML(ea.move):'—';
+      const criTag=d.crit?`<span style="color:var(--red);font-size:.68rem;font-weight:700"> ● ${d.crit} critical</span>`:'';
+      const tdy=d.today>0?`<span style="color:var(--blue);font-size:.68rem"> +${d.today} today</span>`:'';
+      h+=`<div class="statline" style="cursor:pointer;align-items:flex-start" onclick="dmFilters.dealer='${esc(d.name)}';renderApp()">
+        <span style="flex:1;min-width:0">
+          <b>${esc(d.name)}</b>${criTag}${tdy}
+          <div style="font-size:.66rem;color:var(--muted)">${d.stores.length} stores · ${elbTxt}</div>
+        </span>
+        <span style="color:${colorFor(d.pace)};font-weight:700">${d.pace.toFixed(0)}%</span>
+      </div>`;
+    });
+    h+='</div>';
+  } else {
+    h+=`<button style="font-size:.74rem;padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;margin-bottom:12px" onclick="dmFilters.dealer='';renderApp()">✕ Clear filter: ${esc(dmFilters.dealer)}</button>`;
+  }
+
+  // today's table
+  h+=todayTable(list,'dm');
+
+  // today vs ELB expectation
+  h+=elbExpectTable(list);
+
+  // ELB leaderboard
+  h+=elbLeaderboard(list);
+
+  // store list
+  h+=`<div class="list-title">${list.length} store${list.length!==1?'s':''} · ${dmFilters.sort==='urgency'?'worst first':dmFilters.sort}</div>`;
+  list.forEach(s=>{
+    const p=s.pace[0];
+    const e=elb&&elb.byStore[s.store];
+    const hh=e?e.hist.filter(x=>x>0):[];
+    const mov=hh.length>=2?hh[hh.length-2]-hh[hh.length-1]:0;
+    const right=e
+      ?`<span class="pct" style="color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><div class="rsub">ELB ${moveHTML(mov)}</div>`
+      :`<span class="pct" style="color:${colorFor(p)}">${p.toFixed(0)}%</span><div class="rsub">${s.mtd[0]}/${s.goal[0]}</div>`;
+    const sub2=`${esc(s.dealer)} · ${esc(MKT_ABBR[s.market]||s.market)} · ${p.toFixed(0)}% on target`;
+    h+=`<button class="item" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'dm'})">
+      <span class="av" style="background:${p>=100?'rgba(22,163,74,.1)':p>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};color:${hexFor(p)}">${initials(s.store)}</span>
+      <span class="info"><h3>${esc(title(s.store))}</h3><p>${sub2}</p></span>
+      <span class="right">${right}</span></button>`;
+  });
+
+  return h+'</div>';
+}
+
+function renderApp(){
+  if(!model)return;
+  const root=document.getElementById('root');
+  const bar=document.getElementById('appbar');
+  const tEl=document.getElementById('barTitle'),sEl=document.getElementById('barSub');
+  if(nav.screen==='role'){bar.style.display='none';root.innerHTML=screenRole()}
+  else if(nav.screen==='dm'){
+    bar.style.display='flex';
+    tEl.textContent='Director View';
+    const fc=dmFilters.market||dmFilters.dealer?` · filtered`:'';
+    sEl.textContent=model.stores.length+' stores · all sub-dealers'+fc;
+    root.innerHTML=screenDM();
+  }
+  else{
+    bar.style.display='flex';
+    const dn=nav.dealer==='__all__'?'All Sub-Dealers':nav.dealer;
+    if(nav.screen==='dealer'){tEl.textContent=nav.role==='manager'?'Manager':'Employee';sEl.textContent='Select sub-dealer';root.innerHTML=screenDealer()}
+    if(nav.screen==='dash'){tEl.textContent=dn;sEl.textContent='Manager dashboard · '+storesOf().length+' stores';root.innerHTML=screenDash()}
+    if(nav.screen==='stores'){tEl.textContent=dn;sEl.textContent='Choose your store';root.innerHTML=screenStores()}
+    if(nav.screen==='detail'){tEl.textContent=title(nav.store||'');sEl.textContent=(nav.prevScreen==='dm'?'Director View':dn)+' · store detail';root.innerHTML=screenDetail()}
+    if(nav.screen==='links'){tEl.textContent='Sub-Dealer Links';sEl.textContent='';root.innerHTML=screenLinks()}
+  }
+  document.getElementById('foot').textContent='Tomorrow Telecom · Performance Dashboard · % of Days Passed: '+(model.meta.paceFrac*100).toFixed(2)+'%';
+  attachBriefHandlers();
+  updateBackBtn();
+  startOpenClock();
+  if(confettiPending){confettiPending=false;fireConfetti()}
+}
+document.getElementById('btnBack').addEventListener('click',()=>{const t=backTarget();if(t)go(t);});
+// hide back btn when there's nowhere to go back to
+function updateBackBtn(){try{const t=backTarget();document.getElementById('btnBack').style.visibility=t?'visible':'hidden';}catch(e){}}
+
+document.getElementById('btnHome').addEventListener('click',()=>URL_VIEW==='dm'?go({screen:'dm',store:null,prevScreen:null}):go({screen:'role',role:null,dealer:null,store:null}));
+
+async function loadData(){
+  try{
+    const fs=await Promise.all([
+      fetch(MAIN_URL+'&t='+Date.now(),{cache:'no-store'}),
+      fetch(DAILY_URL+'&t='+Date.now(),{cache:'no-store'}),
+      fetch(MIM_URL+'&t='+Date.now(),{cache:'no-store'}).catch(()=>null),
+      fetch(ELB_URL+'&t='+Date.now(),{cache:'no-store'}).catch(()=>null)
+    ]);
+    if(fs[0]&&fs[0].ok){
+      const m=buildModel(parseCSV(await fs[0].text()));
+      if(m.stores.length)model=m;
+    }
+    if(fs[1]&&fs[1].ok)daily=buildDaily(parseCSV(await fs[1].text()));
+    if(fs[2]&&fs[2].ok){const x=buildMim(parseCSV(await fs[2].text()));if(Object.keys(x.byStore).length)mim=x}
+    if(fs[3]&&fs[3].ok){const x=buildElb(parseCSV(await fs[3].text()));if(Object.keys(x.byStore).length)elb=x}
+    if(model)renderApp();
+    else document.getElementById('root').innerHTML='<div class="screen"><div class="err">Could not load data from the Google Sheet. Check your connection and reload.</div></div>';
+  }catch(e){
+    if(!model)document.getElementById('root').innerHTML='<div class="screen"><div class="err">Could not load data from the Google Sheet. Check your connection and reload.</div></div>';
+  }
+}
+loadData();
+setInterval(loadData,REFRESH_MS);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadData()});
+</script>
+
+<!-- View Monthly Goals button — links to store-goals.html?dealer=... (only shows on personalized ?dealer= links) -->
+<script>
+(function(){
+  var p=new URLSearchParams(location.search);
+  var dealer=(p.get('dealer')||'').trim();
+  if(!dealer) return;
+  var GOALS='store-goals.html?dealer='+encodeURIComponent(dealer);
+  function inject(){
+    var root=document.getElementById('root');
+    var hero=root&&root.querySelector('.screen .hero');
+    if(!hero||document.getElementById('goalsBtn')) return;
+    var a=document.createElement('a');
+    a.id='goalsBtn'; a.href=GOALS;
+    a.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #e2e8f0;color:#16203a;border-radius:14px;padding:11px 13px;margin-top:12px;text-decoration:none;box-shadow:0 1px 3px rgba(16,24,40,.06)';
+    a.innerHTML='<span style="font-size:1.1rem;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);flex-shrink:0">📋</span><span style="flex:1"><span style="display:block;font-size:.9rem;font-weight:600">View Monthly Goals</span><span style="display:block;font-size:.72rem;color:#64748b;margin-top:1px">This month’s targets &amp; trend</span></span><span style="color:#94a3b8;font-size:1rem">›</span>';
+    hero.parentNode.insertBefore(a, hero.nextSibling);
+  }
+  new MutationObserver(inject).observe(document.getElementById('root'),{childList:true,subtree:true});
+  inject();
+})();
+</script>
+</body>
+</html>

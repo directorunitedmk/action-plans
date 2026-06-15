@@ -841,6 +841,62 @@ function todayTable(list,prevScreen){
   return h+'</div>';
 }
 
+/* ---------- Today vs ELB expectation (DM only) ----------
+   Maps today's sale types to the ELB categories they move, then checks whether
+   today's activity is feeding the lever where each store ranks WORST nationally. */
+const TODAY_ELB_MAP=[
+  {idx:[0,1],cat:'Prepaid Phone Acts %',label:'Prepaid Acts'},
+  {idx:[2],cat:'HSI %',label:'HSI (HINT)'},
+  {idx:[3],cat:'BTS %',label:'BTS'},
+  {idx:[4],cat:'MIM (Magenta)',label:'Magenta'}
+];
+function elbExpectTable(list){
+  if(!elb)return '';
+  const rows=[];
+  list.forEach(s=>{
+    const e=elb.byStore[s.store];
+    if(!e)return;
+    const levers=TODAY_ELB_MAP.map(m=>{
+      const c=e.cats.find(x=>x.name===m.cat);
+      const today=m.idx.reduce((t,i)=>t+(s.today[i]||0),0);
+      return{label:m.label,rank:c?c.rank:0,score:c?c.score:'',today};
+    }).filter(l=>l.rank>0);
+    if(!levers.length)return;
+    const drag=levers.slice().sort((a,b)=>b.rank-a.rank)[0]; // worst national rank
+    rows.push({s,e,drag,totalToday:s.today.reduce((t,v)=>t+v,0),addressed:drag.today>0});
+  });
+  if(!rows.length)return '';
+  rows.sort((a,b)=>(a.addressed-b.addressed)||(b.drag.rank-a.drag.rank)); // misses first, worst drag first
+  const hit=rows.filter(r=>r.addressed).length;
+  let h=`<div class="panel"><h3>🎯 Today vs ELB expectation · is today feeding each store's weakest lever?</h3>
+    <table class="tday-tbl">
+    <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
+      <th style="text-align:left">Store</th>
+      <th style="text-align:center">ELB</th>
+      <th style="text-align:left">Weakest lever (nat. rank)</th>
+      <th class="conv-col">Today on&nbsp;it?</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const e=r.e,s=r.s;
+    const okColor=r.addressed?'var(--green)':'var(--red)';
+    const okTxt=r.addressed?`✓ +${r.drag.today}`:'✗ 0';
+    h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${r.totalToday===0?';opacity:.6':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'dm'})">
+      <td style="font-weight:600;white-space:nowrap;max-width:78px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>
+      <td style="text-align:center;line-height:1.15"><span style="font-weight:700;color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><br><span style="font-size:.55rem;color:var(--muted)">${esc(e.quintile)}</span></td>
+      <td style="line-height:1.2"><b>${esc(r.drag.label)}</b><br><span style="font-size:.6rem;color:var(--muted)">#${r.drag.rank.toLocaleString()}${r.drag.score?' · '+esc(r.drag.score):''}</span></td>
+      <td class="conv-col" style="font-weight:700;color:${okColor};white-space:nowrap">${okTxt}</td>
+    </tr>`;
+  });
+  h+=`</tbody></table>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 6px 2px;border-top:1px solid var(--border);font-size:.74rem;margin-top:4px">
+      <span style="color:var(--muted)">Feeding their weakest ELB lever today</span>
+      <b style="color:${hit/rows.length>=0.5?'var(--green)':'var(--red)'}">${hit} / ${rows.length} stores</b>
+    </div>
+    <div style="font-size:.63rem;color:var(--muted);padding:3px 6px 0;line-height:1.4">Weakest lever = the daily-movable ELB category (Prepaid Acts, HSI/HINT, BTS, Magenta) where the store ranks worst nationally. <b>✓</b> = today's sales put points on it; <b style="color:var(--red)">✗</b> = today missed it.</div>
+  </div>`;
+  return h;
+}
+
 /* ---------- Director Mode (DM) ---------- */
 let dmFilters={market:'',dealer:'',sort:'urgency',q:''};
 function screenDM(){
@@ -932,13 +988,13 @@ function screenDM(){
     h+=`<div class="panel"><h3>📊 Sub-dealer snapshot · tap to drill down</h3>`;
     dealerRollup.forEach(d=>{
       const ea=d.elb;
-      const elbTxt=ea?`ELB #${ea.avg.toLocaleString()} ${moveHTML(ea.move)}`:'—';
+      const elbTxt=ea?`ELB #${ea.avg.toLocaleString()} `+moveHTML(ea.move):'—';
       const criTag=d.crit?`<span style="color:var(--red);font-size:.68rem;font-weight:700"> ● ${d.crit} critical</span>`:'';
       const tdy=d.today>0?`<span style="color:var(--blue);font-size:.68rem"> +${d.today} today</span>`:'';
       h+=`<div class="statline" style="cursor:pointer;align-items:flex-start" onclick="dmFilters.dealer='${esc(d.name)}';renderApp()">
         <span style="flex:1;min-width:0">
           <b>${esc(d.name)}</b>${criTag}${tdy}
-          <div style="font-size:.66rem;color:var(--muted)">${d.stores.length} stores · ${esc(elbTxt)}</div>
+          <div style="font-size:.66rem;color:var(--muted)">${d.stores.length} stores · ${elbTxt}</div>
         </span>
         <span style="color:${colorFor(d.pace)};font-weight:700">${d.pace.toFixed(0)}%</span>
       </div>`;
@@ -950,6 +1006,9 @@ function screenDM(){
 
   // today's table
   h+=todayTable(list,'dm');
+
+  // today vs ELB expectation
+  h+=elbExpectTable(list);
 
   // ELB leaderboard
   h+=elbLeaderboard(list);

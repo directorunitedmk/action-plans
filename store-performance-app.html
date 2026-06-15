@@ -1047,8 +1047,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadData()
     if(!hero||document.getElementById('goalsBtn')) return;
     var a=document.createElement('a');
     a.id='goalsBtn'; a.href=GOALS;
-    a.style.cssText='display:flex;align-items:center;gap:16px;width:100%;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#e20074 130%);color:#fff;border-radius:18px;padding:18px;margin-top:14px;text-decoration:none;box-shadow:0 4px 14px rgba(30,58,138,.25)';
-    a.innerHTML='<span style="font-size:1.9rem;width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);flex-shrink:0">📋</span><span style="flex:1"><span style="display:block;font-size:1.05rem;font-weight:700">View Monthly Goals</span><span style="display:block;font-size:.78rem;opacity:.92;margin-top:2px">This month’s targets &amp; trend</span></span><span style="opacity:.85;font-size:1.1rem">›</span>';
+    a.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:#fff;border:1px solid #e2e8f0;color:#16203a;border-radius:14px;padding:11px 13px;margin-top:12px;text-decoration:none;box-shadow:0 1px 3px rgba(16,24,40,.06)';
+    a.innerHTML='<span style="font-size:1.1rem;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(37,99,235,.1);flex-shrink:0">📋</span><span style="flex:1"><span style="display:block;font-size:.9rem;font-weight:600">View Monthly Goals</span><span style="display:block;font-size:.72rem;color:#64748b;margin-top:1px">This month’s targets &amp; trend</span></span><span style="color:#94a3b8;font-size:1rem">›</span>';
     hero.parentNode.insertBefore(a, hero.nextSibling);
   }
   new MutationObserver(inject).observe(document.getElementById('root'),{childList:true,subtree:true});

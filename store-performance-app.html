@@ -123,10 +123,23 @@
   .tday-tbl th,.tday-tbl td{padding:5px 5px}
   .tday-tbl th:first-child,.tday-tbl td:first-child{padding-left:4px}
   .tday-tbl .conv-col{border-left:1px solid var(--border);text-align:center;padding:4px 5px}
-  @media(max-width:400px){
-    .tday-tbl{font-size:.67rem}
-    .tday-tbl th,.tday-tbl td{padding:4px 3px}
-    .tday-tbl .conv-col{padding:3px 4px}
+  .tday-tbl .cv-main{font-weight:700;font-size:.76rem}
+  .tday-tbl .cv-q{font-size:.56rem;color:var(--muted);font-weight:400}
+  .tday-tbl .cv-arr{font-size:.62rem;font-weight:700;white-space:nowrap}
+  @media(max-width:460px){
+    .tday-tbl{font-size:.64rem}
+    .tday-tbl th,.tday-tbl td{padding:3px 2px}
+    .tday-tbl th:first-child,.tday-tbl td:first-child{padding-left:3px}
+    .tday-tbl .conv-col{padding:2px 3px}
+    .tday-tbl .cv-main{font-size:.66rem}
+    .tday-tbl .cv-q{font-size:.52rem}
+    .tday-tbl .cv-arr{font-size:.56rem}
+  }
+  @media(max-width:360px){
+    .tday-tbl{font-size:.6rem}
+    .tday-tbl th,.tday-tbl td{padding:3px 1px}
+    .tday-tbl .cv-main{font-size:.62rem}
+    .tday-tbl .cv-arr{font-size:.52rem}
   }
 </style>
 </head>
@@ -797,11 +810,11 @@ function todayTable(list,prevScreen){
     const cdiff=ct-cm;
     const ccolor=cdiff>=0?'var(--green)':'var(--red)';
     const convCell=`<div style="display:flex;justify-content:space-between;align-items:center;gap:2px">
-          <span style="font-weight:700;color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'};font-size:.76rem">${ct.toFixed(0)}%<br><span style="font-size:.56rem;color:var(--muted);font-weight:400">${qpt} QPAY</span></span>
-          ${qpt>0?`<span style="font-size:.62rem;color:${ccolor};font-weight:700;white-space:nowrap">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
+          <span class="cv-main" style="color:${ct>=100?'var(--green)':ct>=70?'var(--amber)':'var(--red)'}">${ct.toFixed(0)}%<br><span class="cv-q">${qpt} QPAY</span></span>
+          ${qpt>0?`<span class="cv-arr" style="color:${ccolor}">${cdiff>=0?'▲':'▼'}${Math.abs(cdiff).toFixed(1)}%</span>`:''}
         </div>`;
     h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${total===0?';opacity:.55':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'${prevScreen||'dash'}'})">
-      <td style="font-weight:600;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
+      <td style="font-weight:600;white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>`;
     s.today.slice(0,4).forEach(v=>{
       const col=v>0?'var(--green)':v===0?'var(--red)':'var(--muted)';
       h+=`<td style="text-align:center;font-weight:${v>0?700:400};color:${col}">${v>0?'+'+v:'—'}</td>`;
@@ -819,9 +832,9 @@ function todayTable(list,prevScreen){
   tots.forEach(v=>h+=`<td style="text-align:center;color:${v>0?'var(--green)':'var(--muted)'}">${v>0?'+'+v:'—'}</td>`);
   h+=`<td style="text-align:center;color:${grand>0?'var(--green)':'var(--muted)'}">+${grand}</td>
       <td class="conv-col">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:4px">
-          <span style="font-weight:700;color:${aggConvT>=100?'var(--green)':aggConvT>=70?'var(--amber)':'var(--red)'};font-size:.78rem">${aggConvT.toFixed(0)}%<br><span style="font-size:.58rem;color:var(--muted);font-weight:400">${totalQpayT} QPAY</span></span>
-          <span style="font-size:.65rem;color:${aggDiffColor};font-weight:700;white-space:nowrap">${aggDiff>=0?'▲':'▼'}${Math.abs(aggDiff).toFixed(1)}%</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:3px">
+          <span class="cv-main" style="color:${aggConvT>=100?'var(--green)':aggConvT>=70?'var(--amber)':'var(--red)'}">${aggConvT.toFixed(0)}%<br><span class="cv-q">${totalQpayT} QPAY</span></span>
+          <span class="cv-arr" style="color:${aggDiffColor}">${aggDiff>=0?'▲':'▼'}${Math.abs(aggDiff).toFixed(1)}%</span>
         </div>
       </td></tr>`;
   h+='</tbody></table>';
@@ -842,13 +855,15 @@ function todayTable(list,prevScreen){
 }
 
 /* ---------- Today vs ELB expectation (DM only) ----------
-   Maps today's sale types to the ELB categories they move, then checks whether
-   today's activity is feeding the lever where each store ranks WORST nationally. */
+   Maps today's sale types to the ELB categories they move, then finds the lever
+   with the biggest WEIGHTED ELB gap (national rank x the category's % share of the
+   ELB score) so the focus lands where a sale moves the overall rank the most. */
 const TODAY_ELB_MAP=[
-  {idx:[0,1],cat:'Prepaid Phone Acts %',label:'Prepaid Acts'},
+  {idx:[0,1],cat:'Prepaid Phone Acts %',label:'New Acts'},
   {idx:[2],cat:'HSI %',label:'HSI (HINT)'},
   {idx:[3],cat:'BTS %',label:'BTS'}
 ];
+const elbFocus=l=>l.weight*l.rank; // weighted ELB gap: worse rank x bigger ELB share = more impact
 function elbExpectTable(list){
   if(!elb)return '';
   const rows=[];
@@ -858,21 +873,21 @@ function elbExpectTable(list){
     const levers=TODAY_ELB_MAP.map(m=>{
       const c=e.cats.find(x=>x.name===m.cat);
       const today=m.idx.reduce((t,i)=>t+(s.today[i]||0),0);
-      return{label:m.label,rank:c?c.rank:0,score:c?c.score:'',today};
+      return{label:m.label,rank:c?c.rank:0,weight:c?c.weight:0,score:c?c.score:'',today};
     }).filter(l=>l.rank>0);
     if(!levers.length)return;
-    const drag=levers.slice().sort((a,b)=>b.rank-a.rank)[0]; // worst national rank
+    const drag=levers.slice().sort((a,b)=>elbFocus(b)-elbFocus(a))[0]; // biggest weighted ELB gap
     rows.push({s,e,drag,totalToday:s.today.reduce((t,v)=>t+v,0),addressed:drag.today>0});
   });
   if(!rows.length)return '';
-  rows.sort((a,b)=>(a.addressed-b.addressed)||(b.drag.rank-a.drag.rank)); // misses first, worst drag first
+  rows.sort((a,b)=>(a.addressed-b.addressed)||(elbFocus(b.drag)-elbFocus(a.drag))); // misses first, biggest weighted gap first
   const hit=rows.filter(r=>r.addressed).length;
   let h=`<div class="panel"><h3>🎯 Today vs ELB expectation · is today feeding each store's weakest lever?</h3>
     <table class="tday-tbl">
     <thead><tr style="color:var(--muted);font-size:.62rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)">
       <th style="text-align:left">Store</th>
       <th style="text-align:center">ELB</th>
-      <th style="text-align:left">Weakest lever (nat. rank)</th>
+      <th style="text-align:left">Focus lever (ELB&nbsp;wt)</th>
       <th class="conv-col">Today on&nbsp;it?</th>
     </tr></thead><tbody>`;
   rows.forEach(r=>{
@@ -882,7 +897,7 @@ function elbExpectTable(list){
     h+=`<tr style="border-bottom:1px solid var(--track);cursor:pointer${r.totalToday===0?';opacity:.6':''}" onclick="go({screen:'detail',store:'${esc(s.store)}',prevScreen:'dm'})">
       <td style="font-weight:600;white-space:nowrap;max-width:78px;overflow:hidden;text-overflow:ellipsis">${esc(title(s.store))}</td>
       <td style="text-align:center;line-height:1.15"><span style="font-weight:700;color:${rankColor(e.rank)}">#${e.rank.toLocaleString()}</span><br><span style="font-size:.55rem;color:var(--muted)">${esc(e.quintile)}</span></td>
-      <td style="line-height:1.2"><b>${esc(r.drag.label)}</b><br><span style="font-size:.6rem;color:var(--muted)">#${r.drag.rank.toLocaleString()}${r.drag.score?' · '+esc(r.drag.score):''}</span></td>
+      <td style="line-height:1.2"><b>${esc(r.drag.label)}</b> <span style="font-size:.56rem;color:var(--blue);font-weight:700">${r.drag.weight}% ELB</span><br><span style="font-size:.6rem;color:var(--muted)">#${r.drag.rank.toLocaleString()}${r.drag.score?' · '+esc(r.drag.score):''}</span></td>
       <td class="conv-col" style="font-weight:700;color:${okColor};white-space:nowrap">${okTxt}</td>
     </tr>`;
   });
@@ -891,7 +906,7 @@ function elbExpectTable(list){
       <span style="color:var(--muted)">Feeding their weakest ELB lever today</span>
       <b style="color:${hit/rows.length>=0.5?'var(--green)':'var(--red)'}">${hit} / ${rows.length} stores</b>
     </div>
-    <div style="font-size:.63rem;color:var(--muted);padding:3px 6px 0;line-height:1.4">Weakest lever = the daily-movable ELB category (Prepaid Acts, HSI/HINT, BTS) where the store ranks worst nationally. Magenta/MIM is excluded — it can't be tracked in real time. <b>✓</b> = today's sales put points on it; <b style="color:var(--red)">✗</b> = today missed it.</div>
+    <div style="font-size:.63rem;color:var(--muted);padding:3px 6px 0;line-height:1.4">Focus lever = the daily-movable ELB category weighted by its share of the score — New Acts <b>20%</b>, HSI/HINT <b>10%</b>, BTS <b>5%</b> — so the pick is where a sale moves the rank most, not just the lowest raw rank. Magenta/MIM excluded (not real-time). <b>✓</b> = today's sales put points on it; <b style="color:var(--red)">✗</b> = missed.</div>
   </div>`;
   return h;
 }
